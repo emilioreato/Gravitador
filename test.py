@@ -83,9 +83,14 @@ class Body:  # Clase que representa un cuerpo con masa
 
 
 # Crear cuerpos (planetas/estrellas)
-bodies = [Body(400, 350, 1900, 20, (255, 255, 0))]
-for i in range(6):
-    bodies.append(Body(i+i*20, 100+i*9, 5+i/10, 5, (60+i*8, 50+i*10, 30)))
+bodies = [Body(400, 350, 1900, 20, (255, 255, 0)),
+          Body(600, 500, 1900, 20, (255, 255, 0)),
+          Body(250, 1000, 1900, 20, (255, 255, 0)),
+
+
+          ]
+# for i in range(6):
+#    bodies.append(Body(i+i*20, 100+i*9, 5+i/10, 5, (60+i*8, 50+i*10, 30)))
 
 selected_body = None  # Cuerpo seleccionado para mover
 
