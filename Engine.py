@@ -8,8 +8,8 @@ from win32api import EnumDisplaySettings
 
 class Engine:
 
-    win_aspect_ratio = 16/12
-    window_height = 640
+    win_aspect_ratio = 16/10
+    window_height = 720
     window_width = window_height * win_aspect_ratio
     window_size = (window_width, window_height)
 

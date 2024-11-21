@@ -20,11 +20,14 @@ Engine.set_up()
 ### PROGRAM VARIABLES ###
 
 
-global follow_mouse
-follow_mouse = False
+global follow_mouse_body
+follow_mouse_body = False
+global follow_mouse_camera
+follow_mouse_camera = (False, None)
 
 global selected_body
 selected_body = None
+
 
 global bodies
 """bodies = {
@@ -35,7 +38,8 @@ global bodies
 
 }"""
 bodies = {}
-for i in range(8):
+"""
+for i in range(3):
     bodies[str(i)] = Body(
         mass=(1*10**24),
         pos=(
@@ -47,13 +51,15 @@ for i in range(8):
 Universe.set_px_m_ratio_based_on_bodies(bodies)
 bodies = {body.id: body for body in bodies.values()}
 for body in bodies.values():
-    body.update_radius_px()
+    body.update_radius_px()"""
 
 
 ### FUNCTIONS ###
 
 def draw():
     Engine.screen.fill(Universe.universe_color)
+
+    Universe.draw_axis(Engine.screen)
 
     for body in bodies.values():
         body.draw(Engine.screen)
@@ -64,6 +70,12 @@ def draw():
 def calculations(time_interval):
 
     for body in bodies.values():
+
+        overlaps = body.check_overlap_by_brute_force(bodies)
+
+        if len(overlaps) > 1 and bodies[str(overlaps[1])] is not body:
+
+            Body.inelastic_collision(bodies[str(overlaps[0])], bodies[str(overlaps[1])], 0.4)
 
         if body.id != selected_body:
 
@@ -83,34 +95,69 @@ while True:
 
     for event in pygame.event.get():
 
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+        if event.type == pygame.MOUSEMOTION:
+            if follow_mouse_body:  # si el selected_body esta seleccionado, cliqueado y se mueve el mouse, se lo mueve tambien siguiendo al mouse.
+                bodies[selected_body].move(event.pos)
+
+            if follow_mouse_camera[0]:  # actualizar la posicion de la camara
+                if event.pos[0] < 0 or event.pos[0] > Engine.window_width or event.pos[1] < 0 or event.pos[1] > Engine.window_height:
+                    continue
+                Universe.camera_x += abs(event.pos[0])-follow_mouse_camera[1][0]
+                Universe.camera_y += abs(event.pos[1])-follow_mouse_camera[1][1]
+
+                follow_mouse_camera = (True, event.pos)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                if not follow_mouse:  # chequea si un cuerpo se clickea y si guarda su id en selected_body para identificarlo despues
+                if not follow_mouse_body:  # chequea si un cuerpo se clickea y si guarda su id en selected_body para identificarlo despues
                     for body in bodies.values():
                         if body.is_clicked(event.pos):
                             selected_body = body.id
-                            follow_mouse = True
+                            follow_mouse_body = True
+
+            elif event.button == 2:
+                Universe.camera_x = Engine.window_width/2
+                Universe.camera_y = Engine.window_height/2
+
+            elif event.button == 3:  # si se clickea con el boton derecho se habilita el movimiento de camara
+                follow_mouse_camera = (True, event.pos)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
-                if follow_mouse:
-
+                if follow_mouse_body:
                     bodies[selected_body].vel_x, bodies[selected_body].vel_y = (0, 0)  # si se suelta el mouse, el cuerpo seleccionado se detiene y deja de seguir al mouse
                     selected_body = None
-                    follow_mouse = False
+                    follow_mouse_body = False
 
-        elif event.type == pygame.MOUSEMOTION:
-            if follow_mouse:  # si el selected_body esta seleccionado, cliqueado y se mueve el mouse, se lo mueve tambien siguiendo al mouse.
-                bodies[selected_body].move(event.pos)
+            elif event.button == 3:  # si se suelta el boton derecho se deshabilita el movimiento de camara
+                follow_mouse_camera = (False, None)
+
+        elif event.type == pygame.MOUSEWHEEL:
+            if event.y > 0:  # Rueda hacia arriba
+                Universe.zoom += Universe.zoom*0.05
+            else:
+                Universe.zoom -= Universe.zoom*0.05
+            Universe.set_px_m_ratio_based_on_bodies(None, False)
+            for body in bodies.values():
+                body.update_radius_px()
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 sys.exit()
+            if event.key == pygame.K_SPACE:
+                bodies["new"] = Body(1*10**24, (100000000000, 100000000000), (0, 0))
+
+                Universe.set_px_m_ratio_based_on_bodies(bodies)
+                bodies["new"].x, bodies["new"].y = Universe.pixels_to_meters(pygame.mouse.get_pos())
+                bodies = {body.id: body for body in bodies.values()}
+
+                for body in bodies.values():
+                    body.update_radius_px()
+
+        elif event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
 
     last_iteration_time = time.perf_counter() - last_iteration_time  # lets calculate preciosely the time between iterations to make the calculations more accurate
 
