@@ -1,0 +1,24 @@
+"""bodies = {
+    "0": Body(5.972 * (10**24), (1.5*10**11, 5*10**10), (-1, 2)),
+    "1": Body(5.972 * (10**24), (1*10**10, -2*10**10), (1, 2)),
+    "2": Body(5.972 * (10**24), (-9*10**10, 6*10**10), (1, 2)),
+    "8": Body(5.972 * (10**24), (random.uniform(-9.9, 9.9)*10**10, random.uniform(-9.9, 9.9)*10**10), (1, 2)),
+
+}"""
+
+
+
+"""
+for i in range(3):
+    bodies[str(i)] = Body(
+        mass=(1*10**24),
+        pos=(
+            random.uniform(-9.9, 9.9) * 10**10,
+            random.uniform(-9.9, 9.9) * 10**10
+        ),
+        vel=(1, 2)
+    )
+Universe.set_px_m_ratio(bodies)
+bodies = {body.id: body for body in bodies.values()}
+for body in bodies.values():
+    body.update_radius_px()"""
