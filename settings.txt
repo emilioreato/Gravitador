@@ -1,0 +1,7 @@
+fps: system
+show_grid: yes
+show_axis: yes
+field_resolution: 40
+window_height(px): 720
+
+

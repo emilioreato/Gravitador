@@ -16,6 +16,8 @@ class Universe:
     universe_color = (5, 5, 7)
     grid_color = (120, 120, 120)
 
+    show_axis_config = Engine.read_line_in_txt("../settings.txt", "show_axis")
+
     field_colors = (
         (6, 5, 6),      # Negro (bajo)
         (128, 0, 32),   # Bordó (intermedio-bajo)
@@ -29,7 +31,7 @@ class Universe:
 
     zoom = 0.5
 
-    field_render_res_x = 58
+    field_render_res_x = int(Engine.read_line_in_txt("../settings.txt", "field_resolution"))
     field_render_res_y = int(field_render_res_x/(Engine.win_aspect_ratio))
 
     camera_x = Engine.window_width / 2
@@ -114,13 +116,14 @@ class Universe:
         # Convertir el arreglo de colores a una superficie de Pygame
 
     def draw_axis():
-        x, y = (Universe.camera_x, Universe.camera_y)
+        if Universe.show_axis_config == "yes":
+            x, y = (Universe.camera_x, Universe.camera_y)
 
-        pygame.draw.line(Engine.screen, Universe.grid_color, (0, y), (Engine.window_width, y), int(2*(Universe.zoom**0.5)))  # Línea hacia abajo
-        pygame.draw.line(Engine.screen,  Universe.grid_color, (x, 0), (x, Engine.window_height),  int(2*Universe.zoom**0.5))  # Línea hacia la izquierda
+            pygame.draw.line(Engine.screen, Universe.grid_color, (0, y), (Engine.window_width, y), int(2*(Universe.zoom**0.5)))  # Línea hacia abajo
+            pygame.draw.line(Engine.screen,  Universe.grid_color, (x, 0), (x, Engine.window_height),  int(2*Universe.zoom**0.5))  # Línea hacia la izquierda
 
-        # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x - length, y), 2)
-        # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x + length, y), 2)  # Línea hacia la derecha
+            # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x - length, y), 2)
+            # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x + length, y), 2)  # Línea hacia la derecha
 
     def set_px_m_ratio(bodies=None, re_check=True, mouse_pos=None):  # this lets you set the bounders based on the particles in screen. zoom initially set as -20% (1.2)
         if re_check:  # si se pasa re_check tambien se tiene q pasar bodies para
