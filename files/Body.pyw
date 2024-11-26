@@ -23,7 +23,7 @@ class Body:
         self.mass = mass
 
         self.radius = mass / (5*10**3)  # 294401.3 * math.log10(mass) - 1272006.5  # self.mass ** 0.434
-        print(self.radius)
+        # print(self.radius)
 
         if color == None:
             color = Engine.calcular_color(Universe.scalar_meters_to_pixels(self.radius), 1, Engine.window_height/4, colores=Universe.body_creation_colors)
@@ -144,7 +144,7 @@ class Body:
         Engine.screen.blit(text, (mouse_pos[0]+Engine.wh//30, mouse_pos[1]-Engine.wh//30))
 
         if returnn:
-            print(radius_px)
+            # print(radius_px)
             if radius_px == 0:
                 radius_px = 2
             return Universe.scalar_pixels_to_meters(radius_px) * 5*10**3, color

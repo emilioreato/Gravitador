@@ -16,10 +16,16 @@ import os
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))  # sets the current directory to the file's directory # noqa
 
+### SET UP###
+
 pygame.init()
 
-
-### SET UP###
+# saludo de bienvenida
+if os.name == 'nt':  # Para Windows
+    os.system('cls')  # limpiar la consola
+else:  # Para Linux/Mac
+    os.system('clear')  # limpiar la consola
+print("Bienvenido a Gravitum. ¡Experimenta!\n\nCódigo fuente: https://github.com/emilioreato/Gravitum")
 
 
 Engine.set_up()
@@ -117,7 +123,7 @@ def calculations(time_interval):
 
         if overlaps:
 
-            print(overlaps)
+            # print(overlaps)
             processed.append(overlaps[0])
             processed.append(body.id)
 
@@ -276,13 +282,14 @@ while True:
                 follow_mouse_camera = (False, None)  # dejamos de seguir el movimiento del mouse para la camara
 
         elif event.type == pygame.MOUSEWHEEL:
-            if event.y > 0:  # si rueda hacia arriba
-                Universe.zoom += Universe.zoom*0.06  # aumentamos el zoom en un 6%
-            else:
-                Universe.zoom -= Universe.zoom*0.06  # sino lo reducimos en un 6%
-            Universe.set_px_m_ratio(None, False, pygame.mouse.get_pos())  # actualizamos la proporcion de pixeles_metros en base al nuevo zoom y a la posicion del mouse
-            for body in bodies.values():  # actualizamos el radio de cada cuerpo en pixeles en base a la nueva proporcion px_m
-                body.update_radius_px()
+            if len(bodies) > 0:  # si hay al menos un cuerpo en pantalla
+                if event.y > 0:  # si rueda hacia arriba
+                    Universe.zoom += Universe.zoom*0.06  # aumentamos el zoom en un 6%
+                else:
+                    Universe.zoom -= Universe.zoom*0.06  # sino lo reducimos en un 6%
+                Universe.set_px_m_ratio(None, False, pygame.mouse.get_pos())  # actualizamos la proporcion de pixeles_metros en base al nuevo zoom y a la posicion del mouse
+                for body in bodies.values():  # actualizamos el radio de cada cuerpo en pixeles en base a la nueva proporcion px_m
+                    body.update_radius_px()
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:

@@ -16,7 +16,7 @@ class Engine:
 
         if not os.path.exists(file_path):  # creates the file if it doesnt exist
             with open(file_path, 'w') as file:
-                file.write("fps: system \show_grid: yes\nshow_axis: yes\nfield_resolution: 40\nwindow_height(px): 720")  # writes the default values
+                file.write("fps: system \nshow_grid: yes\nshow_axis: yes\nfield_resolution: 40\nwindow_height(px): 720")  # writes the default values
 
         else:
             with open(file_path, 'r') as file:
@@ -31,7 +31,6 @@ class Engine:
 
     win_aspect_ratio = 16/10
     window_height = int(read_line_in_txt("../settings.txt", "window_height(px)"))
-    print(window_height)
     wh = window_height
     window_width = window_height * win_aspect_ratio
     window_size = (window_width, window_height)

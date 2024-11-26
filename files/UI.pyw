@@ -8,7 +8,7 @@ class UI_MANAGER:
     def load_resoruces():
 
         UI_MANAGER.metrics = {
-            "help_btn": {"x": Engine.window_height//27, "y": Engine.window_height//21, "w": Engine.window_height//24, "h": Engine.window_height//24, "use_rect_in": "simulation"},
+            "help_btn": {"x": Engine.window_height//27, "y": Engine.window_height//25, "w": Engine.window_height//24, "h": Engine.window_height//24, "use_rect_in": "simulation"},
             "menu_ui": {"x": (Engine.window_width - (1920 / 1280) * Engine.window_height // 1.4) // 2, "y": (Engine.window_height - Engine.window_height // 1.4) // 2, "w": (1920/1280)*Engine.window_height//1.4, "h": Engine.window_height//1.4, "make_rect": False},
             "github_btn": {"x": Engine.window_height//1.04, "y": Engine.window_height//1.35, "w": (420/154)*Engine.window_height//16, "h": Engine.window_height//16, "use_rect_in": "help"},
         }
