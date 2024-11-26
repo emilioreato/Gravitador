@@ -16,7 +16,7 @@ class Body:
               (50, 10, 150),
               ]
 
-    def __init__(self, mass, pos, vel):
+    def __init__(self, mass, pos, vel, color=None):
 
         self.id = Body.generate_id()
 
@@ -25,7 +25,9 @@ class Body:
         self.radius = mass / (5*10**3)  # 294401.3 * math.log10(mass) - 1272006.5  # self.mass ** 0.434
         print(self.radius)
 
-        self.color = Body.COLORS[1]
+        if color == None:
+            color = Engine.calcular_color(Universe.scalar_meters_to_pixels(self.radius), 1, Engine.window_height/4, colores=Universe.body_creation_colors)
+        self.color = color  # Body.COLORS[1]
 
         self.x, self.y = pos
         self.x_px, self.y_px = (5, 5)
@@ -34,7 +36,7 @@ class Body:
 
     def draw(self):
 
-        pygame.draw.circle(Engine.screen, (5, 5, 5), (self.x_px, self.y_px), self.radius_px)  # self.color
+        pygame.draw.circle(Engine.screen, self.color, (self.x_px, self.y_px), self.radius_px)  # self.color
 
     def move(self, pos):
         self.x, self.y = Universe.pixels_to_meters(pos)
@@ -104,7 +106,6 @@ class Body:
 
     def update_a_v_pos_based_on_force(self, Fx, Fy, dt):
         # Aceleración
-
         ax = Fx / self.mass
         ay = Fy / self.mass
 
@@ -134,9 +135,11 @@ class Body:
 
         radius_px = int(math.sqrt((mouse_pos[0]-creation_pos[0])**2 + (mouse_pos[1]-creation_pos[1])**2))
 
-        pygame.draw.circle(Engine.screen, Body.COLORS[2], creation_pos, radius_px)
+        color = Engine.calcular_color(radius_px, 1, Engine.window_height/4, colores=Universe.body_creation_colors)
 
-        text = Engine.font1.render(f"{Universe.scalar_pixels_to_meters(radius_px)}", True, Engine.UI_COLORS[4])
+        pygame.draw.circle(Engine.screen, color, creation_pos, radius_px)
+
+        text = Engine.font1.render(f"{Universe.scalar_pixels_to_meters(radius_px):.1f}", True, Engine.UI_COLORS[0])
 
         Engine.screen.blit(text, (mouse_pos[0]+Engine.wh//30, mouse_pos[1]-Engine.wh//30))
 
@@ -144,5 +147,5 @@ class Body:
             print(radius_px)
             if radius_px == 0:
                 radius_px = 2
-            return Universe.scalar_pixels_to_meters(radius_px) * 5*10**3
+            return Universe.scalar_pixels_to_meters(radius_px) * 5*10**3, color
             # return 10 ** ((Universe.scalar_pixels_to_meters(radius_px) + 1272006.5) / 294401.3)

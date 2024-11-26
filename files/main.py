@@ -3,22 +3,42 @@
 from Body import Body
 from Universe import Universe
 from Engine import Engine
+from UI import UI_MANAGER, Simulation_Ui, Help_Ui
 import pygame
 import sys
 import win32api
 import time
 import random
 import numpy as np
+import webbrowser
+import os
+
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))  # sets the current directory to the file's directory # noqa
 
 pygame.init()
 
 
 ### SET UP###
+
+
 Engine.set_up()
+ui_manager = UI_MANAGER()
+
+ui_manager.load_resoruces()
+ui_manager.resize()
 
 
 ### PROGRAM VARIABLES ###
 
+global active_uis
+active_uis = {
+    "simulation": True,
+    "help": False,
+}
+
+global pause_simulation
+pause_simulation = False
 
 global follow_mouse_body
 follow_mouse_body = False
@@ -38,18 +58,46 @@ bodies = {}
 
 ### FUNCTIONS ###
 
+def check_ui_allowance(element_in_media_rect_list):
+
+    use_in = element_in_media_rect_list["use_rect_in"]
+
+    if type(use_in) == tuple:
+        for possible_use in use_in:
+            if active_uis[possible_use] == True:
+                return True
+    else:
+        if use_in == "all" or active_uis[use_in] == True:
+            return True
+    return False
+
+
+def collidepoint(rect, point_pos):
+    if rect.collidepoint(point_pos):
+        return True
+    return False
+
+
 def draw():
     # Engine.screen.fill(Universe.universe_color)
 
-    Universe.draw_field(bodies)
+    if active_uis["simulation"]:
 
-    Universe.draw_axis()
+        Universe.draw_field(bodies)
 
-    for body in bodies.values():
-        body.draw()
+        Universe.draw_axis()
 
-    if body_creation_mode[0]:
-        Body.creation_draw(body_creation_mode[1], event.pos)
+        for body in bodies.values():
+            body.draw()
+
+        if body_creation_mode[0]:
+            Body.creation_draw(body_creation_mode[1], event.pos)
+
+        Simulation_Ui.draw()
+
+    if active_uis["help"]:
+
+        Help_Ui.draw()
 
     pygame.display.flip()
 
@@ -171,8 +219,31 @@ while True:
                         selected_body = body.id  # se guarda su id en selected_body para identificarlo despues
                         follow_mouse_body = True  # se activa el seguimiento de mouse para cuerpoo
 
+                if check_ui_allowance(UI_MANAGER.rects["help_btn"]) and collidepoint(UI_MANAGER.rects["help_btn"]["rect"], event.pos):  # check if btn was clicked
+
+                    active_uis["help"] = not active_uis["help"]
+                    if active_uis["help"]:
+                        pause_simulation = True
+                    else:
+                        pause_simulation = False
+
+                elif check_ui_allowance(UI_MANAGER.rects["github_btn"]) and collidepoint(UI_MANAGER.rects["github_btn"]["rect"], event.pos):  # check if btn was clicked
+                    webbrowser.open("https://github.com/emilioreato/Gravitum")
+
             elif event.button == 2:  # si se cliquea el boton del medio centramos la camara
-                body_creation_mode = (True, event.pos)
+
+                clicked_on_smth = False
+
+                for body in bodies.values():  # chequea entre todos los cuerpos si alguno fue clickeado y si es asi:
+                    if body.is_clicked(event.pos):
+                        clicked_on_smth = True
+                        selected_body = body.id
+
+                if clicked_on_smth:
+                    bodies.pop(selected_body)
+
+                else:
+                    body_creation_mode = (True, event.pos)
 
             elif event.button == 3:  # si se clickea con el boton derecho se habilita el movimiento de camara
                 follow_mouse_camera = (True, event.pos)
@@ -185,20 +256,21 @@ while True:
                     follow_mouse_body = False  # dejamos de seguir el mouse para el mov de un cuerpo
 
             elif event.button == 2:
+                if body_creation_mode[0]:  # si veniamos creando un cuerpo
 
-                mass = Body.creation_draw(body_creation_mode[1], event.pos, True)
-                x, y = Universe.pixels_to_meters(pygame.mouse.get_pos())
-                bodies["new"] = Body(mass, (x, y), (0, 0))
-                id = bodies["new"].id
-                bodies[id] = bodies.pop("new")
+                    mass, color = Body.creation_draw(body_creation_mode[1], event.pos, True)
+                    x, y = Universe.pixels_to_meters(pygame.mouse.get_pos())
+                    bodies["new"] = Body(mass, (x, y), (0, 0), color)
+                    id = bodies["new"].id
+                    bodies[id] = bodies.pop("new")
 
-                if len(bodies) < 2:
-                    Universe.set_px_m_ratio(bodies)
+                    if len(bodies) < 2:
+                        Universe.set_px_m_ratio(bodies)
 
-                for body in bodies.values():
-                    body.update_radius_px()
+                    for body in bodies.values():
+                        body.update_radius_px()
 
-                body_creation_mode = False, None
+                    body_creation_mode = False, None
 
             elif event.button == 3:  # si se suelta el boton derecho se deshabilita el movimiento de camara
                 follow_mouse_camera = (False, None)  # dejamos de seguir el movimiento del mouse para la camara
@@ -223,6 +295,12 @@ while True:
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
 
+            elif event.key == pygame.K_k:
+                Universe.camera_x = Engine.window_width/2
+                Universe.camera_y = Engine.window_height/2
+
+                bodies = {}
+
         elif event.type == pygame.KEYUP:  # si se suelta una tecla
             if event.key == pygame.K_SPACE:  # si se suelta es espacio entonces restauremos el time_scale al antiguo
                 Universe.time_scale = Universe.time_scale/4
@@ -233,7 +311,8 @@ while True:
 
     last_iteration_time = time.perf_counter() - last_iteration_time  # lets calculate preciosely the time between iterations to make the calculations more accurate
 
-    calculations(last_iteration_time)  # calling the calculations main function
+    if not pause_simulation:
+        calculations(last_iteration_time)  # calling the calculations main function
 
     draw()  # calling the draw main function
 

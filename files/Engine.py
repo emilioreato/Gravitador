@@ -12,7 +12,7 @@ class Engine:
     # units_scale = 10**10
 
     win_aspect_ratio = 16/10
-    window_height = 720
+    window_height = 600
     wh = window_height
     window_width = window_height * win_aspect_ratio
     window_size = (window_width, window_height)
@@ -20,7 +20,7 @@ class Engine:
     # font1 = pygame.font.SysFont(None, 20)
 
     UI_COLORS = [
-        (255, 255, 255),  # Blanco (alto)
+        (140, 140, 140),  # Blanco (alto)
         (255, 165, 0),    # Naranja (intermedio-alto)
         (255, 0, 0),    # Rojo (intermedio)
         (128, 0, 32),   # Bordó (intermedio-bajo)
@@ -41,16 +41,9 @@ class Engine:
 
         Engine.font1 = pygame.font.SysFont("Times New Roman", Engine.wh//34)
 
-    def calcular_color(valor, minimo, maximo):
-        # Definir los colores por los que quieres que pase la interpolación
-        colores = [
-            (0, 0, 0),      # Negro (bajo)
-            (128, 0, 32),   # Bordó (intermedio-bajo)
-            (255, 0, 0),    # Rojo (intermedio)
-            (255, 165, 0),  # Naranja (intermedio-alto)
-            (255, 255, 255)  # Blanco (alto)
-        ]
-        colores = colores[::-1]  # esto se usa para invertir los colores
+    @jit(nopython=True, fastmath=True, cache=True, nogil=True, parallel=True)
+    def calcular_color(valor, minimo, maximo, colores):
+        # colores = colores[::-1]  # esto se usa para invertir los colores
 
         # Normalizar el valor entre 0 y 1
         valor_normalizado = (valor - minimo) / (maximo - minimo)
@@ -74,4 +67,4 @@ class Engine:
             for i in range(3)
         ]
 
-        return tuple(color_resultante)
+        return color_resultante

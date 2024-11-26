@@ -9,22 +9,33 @@ class Universe:
 
     G = 3500  # 6.674*10**(-18)
 
-    px_to_m_ratio = (50/30)
+    px_to_m_ratio = (60/30)
 
     time_scale = 0.000000005
 
     universe_color = (5, 5, 7)
-    grid_color = (36, 30, 36)
+    grid_color = (120, 120, 120)
+
+    field_colors = (
+        (6, 5, 6),      # Negro (bajo)
+        (128, 0, 32),   # Bordó (intermedio-bajo)
+        (255, 15, 5),    # Rojo (intermedio)
+        (255, 170, 5),  # Naranja (intermedio-alto)
+        (255, 255, 255)  # Blanco (alto)
+    )
+
+    body_creation_colors = ((147, 89, 68),
+                            (227, 170, 57))
 
     zoom = 0.5
 
-    field_render_res_x = 50
+    field_render_res_x = 58
     field_render_res_y = int(field_render_res_x/(Engine.win_aspect_ratio))
 
     camera_x = Engine.window_width / 2
     camera_y = Engine.window_height / 2
 
-    min_g = 100
+    min_g = 500
     max_g = 10_000_000_000
 
     def gravitational_intensity_at_point(bodies, px, py):
@@ -67,7 +78,7 @@ class Universe:
 
                 g_module = Universe.gravitational_intensity_at_point(bodies, px, py)*10000
                 # print(g_module)
-                color = Engine.calcular_color(g_module, Universe.min_g, Universe.max_g)
+                color = Engine.calcular_color(g_module, Universe.min_g, Universe.max_g, Universe.field_colors)
 
                 dots[i, j] = color  # Universe.value_to_rgb(g_module, min_g, max_g)
 
@@ -78,7 +89,7 @@ class Universe:
 
         # dots = np.clip(dots, 0, 255)
 
-        resized_image = cv2.resize(dots, (int(Engine.window_height), int(Engine.window_width)), interpolation=cv2.INTER_CUBIC)  # cv2.INTER_LINEAR
+        resized_image = cv2.resize(dots, (int(Engine.window_height), int(Engine.window_width)), interpolation=cv2.INTER_CUBIC)  # cv2.INTER_CUBIC  INTER_LINEAR
 
         # print(f"Forma de la imagen original: {dots.shape}", f"Forma de la imagen original: {resized_image.shape}")  # Esto debe ser (alto, ancho, 3)
 
@@ -107,6 +118,7 @@ class Universe:
 
         pygame.draw.line(Engine.screen, Universe.grid_color, (0, y), (Engine.window_width, y), int(2*(Universe.zoom**0.5)))  # Línea hacia abajo
         pygame.draw.line(Engine.screen,  Universe.grid_color, (x, 0), (x, Engine.window_height),  int(2*Universe.zoom**0.5))  # Línea hacia la izquierda
+
         # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x - length, y), 2)
         # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x + length, y), 2)  # Línea hacia la derecha
 
@@ -145,6 +157,7 @@ class Universe:
     @staticmethod
     def scalar_pixels_to_meters(pixels):
         return pixels*Universe.px_to_m_ratio
+    from numba import jit
 
     @staticmethod
     def scalar_meters_to_pixels(distance_module):
