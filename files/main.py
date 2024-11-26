@@ -88,7 +88,7 @@ def calculations(time_interval):
             v1_final, v2_final = Body.inelastic_collision_2d(m1, v1, m2, v2, e, pos1, pos2)
 
             body.vel_x, body.vel_y = v1_final
-            bodies[str(overlaps[0])].vel_x, bodies[str(overlaps[0])].vel_y = v2_final
+            bodies[str(overlaps[0])].vel_x, bodies[str(overlaps[0])].vel_y = v2_final  
 
             overlap_distance = (body.radius + bodies[str(overlaps[0])].radius) - np.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
             if overlap_distance > 0:

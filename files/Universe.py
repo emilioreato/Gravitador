@@ -11,7 +11,7 @@ class Universe:
 
     px_to_m_ratio = (50/30)
 
-    time_scale = 0.00000002
+    time_scale = 0.000000005
 
     universe_color = (5, 5, 7)
     grid_color = (36, 30, 36)

@@ -12,7 +12,7 @@ class Engine:
     # units_scale = 10**10
 
     win_aspect_ratio = 16/10
-    window_height = 480
+    window_height = 720
     wh = window_height
     window_width = window_height * win_aspect_ratio
     window_size = (window_width, window_height)
