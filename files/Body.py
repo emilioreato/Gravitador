@@ -35,8 +35,29 @@ class Body:
         self.vel_x,  self.vel_y = vel  # this should be a tuple with x and y axis velocity
 
     def draw(self):
-
         pygame.draw.circle(Engine.screen, self.color, (self.x_px, self.y_px), self.radius_px)  # self.color
+
+    def draw_arrow(start, end, width=6, arrow_size=22):
+
+        # Línea principal
+        pygame.draw.line(Engine.screen, Body.COLORS[2], start, end, width)
+
+        # Calcula el ángulo
+        angle = math.atan2(end[1] - start[1], end[0] - start[0])
+
+        # Coordenadas del triángulo de la punta
+        arrow_tip = end
+        left_wing = (
+            end[0] - arrow_size * math.cos(angle - math.pi / 6),
+            end[1] - arrow_size * math.sin(angle - math.pi / 6)
+        )
+        right_wing = (
+            end[0] - arrow_size * math.cos(angle + math.pi / 6),
+            end[1] - arrow_size * math.sin(angle + math.pi / 6)
+        )
+
+        # Dibuja el triángulo
+        pygame.draw.polygon(Engine.screen, Body.COLORS[2], [arrow_tip, left_wing, right_wing])
 
     def move(self, pos):
         self.x, self.y = Universe.pixels_to_meters(pos)
@@ -113,6 +134,7 @@ class Body:
         self.vel_x += ax * dt
         self.vel_y += ay * dt
 
+    def update_pos_based_on_vel(self, dt):
         # Actualizar posición
         self.x += self.vel_x * dt
         self.y += self.vel_y * dt

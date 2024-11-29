@@ -7,7 +7,7 @@ import cv2
 
 class Universe:
 
-    G = 3500  # 6.674*10**(-18)
+    G = 4500  # 6.674*10**(-18)
 
     px_to_m_ratio = (60/30)
 
@@ -119,11 +119,8 @@ class Universe:
         if Universe.show_axis_config == "yes":
             x, y = (Universe.camera_x, Universe.camera_y)
 
-            pygame.draw.line(Engine.screen, Universe.grid_color, (0, y), (Engine.window_width, y), int(2*(Universe.zoom**0.5)))  # Línea hacia abajo
-            pygame.draw.line(Engine.screen,  Universe.grid_color, (x, 0), (x, Engine.window_height),  int(2*Universe.zoom**0.5))  # Línea hacia la izquierda
-
-            # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x - length, y), 2)
-            # pygame.draw.line(screen,  Universe.grid_color, (x, y), (x + length, y), 2)  # Línea hacia la derecha
+            pygame.draw.line(Engine.screen, Universe.grid_color, (0, y), (Engine.window_width, y), 1)  # Línea hacia abajo
+            pygame.draw.line(Engine.screen,  Universe.grid_color, (x, 0), (x, Engine.window_height),  1)  # Línea hacia la izquierda
 
     def set_px_m_ratio(bodies=None, re_check=True, mouse_pos=None):  # this lets you set the bounders based on the particles in screen. zoom initially set as -20% (1.2)
         if re_check:  # si se pasa re_check tambien se tiene q pasar bodies para
@@ -154,13 +151,11 @@ class Universe:
 
     @staticmethod
     def meters_to_pixels(pos):
-        # print(Universe.camera_x)
         return (pos[0]/Universe.px_to_m_ratio+Universe.camera_x, pos[1]/Universe.px_to_m_ratio+Universe.camera_y)
 
     @staticmethod
     def scalar_pixels_to_meters(pixels):
         return pixels*Universe.px_to_m_ratio
-    from numba import jit
 
     @staticmethod
     def scalar_meters_to_pixels(distance_module):

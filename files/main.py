@@ -21,11 +21,8 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))  # sets the current directo
 pygame.init()
 
 # saludo de bienvenida
-if os.name == 'nt':  # Para Windows
-    os.system('cls')  # limpiar la consola
-else:  # Para Linux/Mac
-    os.system('clear')  # limpiar la consola
-print("Bienvenido a Gravitum. ¡Experimenta!\n\nCódigo fuente: https://github.com/emilioreato/Gravitum")
+os.system('cls')  # limpiar la consola
+print(">>>Bienvenido a Gravitum. ¡Experimenta!\n\n>Código fuente: https://github.com/emilioreato/Gravitum")
 
 
 Engine.set_up()
@@ -50,6 +47,9 @@ global follow_mouse_body
 follow_mouse_body = False
 global follow_mouse_camera
 follow_mouse_camera = (False, None)
+
+global arrow_velocity_mode
+arrow_velocity_mode = (False, None)
 
 global body_creation_mode
 body_creation_mode = (False, None)
@@ -96,6 +96,9 @@ def draw():
         for body in bodies.values():
             body.draw()
 
+        if arrow_velocity_mode[0]:
+            Body.draw_arrow((bodies[arrow_velocity_mode[1]].x_px, bodies[arrow_velocity_mode[1]].y_px), pygame.mouse.get_pos())
+
         if body_creation_mode[0]:
             Body.creation_draw(body_creation_mode[1], event.pos)
 
@@ -110,7 +113,7 @@ def draw():
 
 def calculations(time_interval):
     global selected_body, follow_mouse_body
-    popit = False
+    delete_body = False
 
     processed = []
 
@@ -163,7 +166,7 @@ def calculations(time_interval):
 
             ids = body.id, overlaps[0]
 
-            popit = True
+            delete_body = True
 
             break
 
@@ -171,11 +174,12 @@ def calculations(time_interval):
 
             fx, fy = body.calculate_force(bodies.values())
             body.update_a_v_pos_based_on_force(fx, fy, time_interval*Universe.time_scale)
-            # print(fx)
+        body.update_pos_based_on_vel(time_interval*Universe.time_scale)
+        # print(fx)
 
         body.update_px_based_on_pos()
 
-    if popit:
+    if delete_body:
 
         bodies["new"] = Body(mass, position, vel)
 
@@ -187,8 +191,14 @@ def calculations(time_interval):
 
         # Universe.set_px_m_ratio(bodies)
 
-        selected_body = None
-        follow_mouse_body = False
+        global arrow_velocity_mode
+        if arrow_velocity_mode[0]:  # si estabamos modificando la velocidad de un cuerpo con el modo flecha, entonces actualizamos el id y selected body para q empiece a modificar el nuevo
+            arrow_velocity_mode = (True, id)  # se desactiva el modo flechas si venia activado
+            selected_body = id
+        else:
+            if selected_body in ids:  # si el cuerpo seleccionado es alguno de los q que se borro, entonces deseleccionamos el cuerpo seleccionado
+                selected_body = None
+                follow_mouse_body = False
 
         for body in bodies.values():
             body.update_radius_px()
@@ -218,7 +228,12 @@ while True:
                 bodies[selected_body].move(event.pos)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
+
             if event.button == 1:  # si se cliquea el boton izq del mouse
+
+                if arrow_velocity_mode[0]:
+                    arrow_velocity_mode = (False, None)
+
                 # if not follow_mouse_body:  # si ya no
                 for body in bodies.values():  # chequea entre todos los cuerpos si alguno fue clickeado y si es asi:
                     if body.is_clicked(event.pos):
@@ -238,6 +253,9 @@ while True:
 
             elif event.button == 2:  # si se cliquea el boton del medio centramos la camara
 
+                if arrow_velocity_mode[0]:
+                    arrow_velocity_mode = (False, None)
+
                 clicked_on_smth = False
 
                 for body in bodies.values():  # chequea entre todos los cuerpos si alguno fue clickeado y si es asi:
@@ -252,7 +270,17 @@ while True:
                     body_creation_mode = (True, event.pos)
 
             elif event.button == 3:  # si se clickea con el boton derecho se habilita el movimiento de camara
-                follow_mouse_camera = (True, event.pos)
+
+                clicked_on_smth = False
+                for body in bodies.values():  # chequea entre todos los cuerpos si alguno fue clickeado y si es asi:
+                    if body.is_clicked(event.pos):
+                        clicked_on_smth = True
+                        selected_body = body.id
+
+                if len(bodies) > 0 and clicked_on_smth:  # si hay mas de un cuerpo y se clickeo en alguno, se habilita el modo flechas
+                    arrow_velocity_mode = (True, selected_body)
+                else:
+                    follow_mouse_camera = (True, event.pos)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:  # si se suelta el boton izq del mouse
@@ -278,8 +306,21 @@ while True:
 
                     body_creation_mode = False, None
 
-            elif event.button == 3:  # si se suelta el boton derecho se deshabilita el movimiento de camara
-                follow_mouse_camera = (False, None)  # dejamos de seguir el movimiento del mouse para la camara
+            elif event.button == 3:  # si se suelta el boton derecho
+
+                if arrow_velocity_mode[0]:  # si el modo flecha estaba activado
+
+                    new_pos = Universe.pixels_to_meters(event.pos)
+                    pre_pos = Universe.pixels_to_meters((bodies[arrow_velocity_mode[1]].x_px, bodies[arrow_velocity_mode[1]].y_px))
+
+                    mult = 4
+
+                    bodies[selected_body].vel_x, bodies[selected_body].vel_y = (new_pos[0]-pre_pos[0])*mult, (new_pos[1]-pre_pos[1])*mult
+
+                    arrow_velocity_mode = (False, None)
+
+                else:  # se deshabilita el movimiento de camara
+                    follow_mouse_camera = (False, None)  # dejamos de seguir el movimiento del mouse para la camara
 
         elif event.type == pygame.MOUSEWHEEL:
             if len(bodies) > 0:  # si hay al menos un cuerpo en pantalla
@@ -307,6 +348,8 @@ while True:
                 Universe.camera_y = Engine.window_height/2
 
                 bodies = {}
+            elif event.key == pygame.K_p:
+                pause_simulation = not pause_simulation
 
         elif event.type == pygame.KEYUP:  # si se suelta una tecla
             if event.key == pygame.K_SPACE:  # si se suelta es espacio entonces restauremos el time_scale al antiguo
