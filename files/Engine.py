@@ -64,7 +64,7 @@ class Engine:
 
         pygame.display.set_icon(pygame.image.load("media\\icon.png").convert_alpha())  # sets window icon
 
-        Engine.font1 = pygame.font.SysFont("Times New Roman", Engine.wh//34)
+        Engine.font1 = pygame.font.SysFont("Times New Roman", Engine.wh//38)
 
     @jit(nopython=True)
     def calcular_color(valor, minimo, maximo, colores):

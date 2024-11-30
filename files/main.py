@@ -57,12 +57,13 @@ body_creation_mode = (False, None)
 global selected_body
 selected_body = None
 
-
 global bodies
 bodies = {}
-
+global collitions_history
+collitions_history = {}
 
 ### FUNCTIONS ###
+
 
 def check_ui_allowance(element_in_media_rect_list):
 
@@ -85,11 +86,11 @@ def collidepoint(rect, point_pos):
 
 
 def draw():
-    # Engine.screen.fill(Universe.universe_color)
+    Engine.screen.fill(Universe.universe_color)
 
     if active_uis["simulation"]:
 
-        Universe.draw_field(bodies)
+        # Universe.draw_field(bodies)
 
         Universe.draw_axis()
 
@@ -112,76 +113,107 @@ def draw():
 
 
 def calculations(time_interval):
-    global selected_body, follow_mouse_body
+    global selected_body, follow_mouse_body, arrow_velocity_mode
     delete_body = False
 
-    processed = []
+    processed = set()
 
     for body in bodies.values():
 
-        if body.id in processed:
-            continue
+        if not body.id in processed:
 
-        overlaps = body.check_overlap_by_brute_force(bodies)
+            overlaps = body.check_overlap_by_brute_force(bodies)  # checkea si el cuerpo actual esta colisionando con algun otro cuerpo de la lista de cuerpos.
 
-        if overlaps:
+            if overlaps:
 
-            # print(overlaps)
-            processed.append(overlaps[0])
-            processed.append(body.id)
+                m1 = body.mass
 
-            """
+                processed.add(body.id)
 
-            m1 = body.mass
-            v1 = (body.vel_x, body.vel_y)
-            m2 = bodies[str(overlaps[0])].mass  # masa del cuerpo 1
-            v2 = (bodies[str(overlaps[0])].vel_x, bodies[str(overlaps[0])].vel_y)  # velocidad inicial del cuerpo 1
+                for body_overlaped_id in overlaps:
 
-            e = 0.8               # coeficiente de restitución
+                    processed.add(body_overlaped_id)
 
-            pos1 = (body.x, body.y)
-            pos2 = (bodies[str(overlaps[0])].x, bodies[str(overlaps[0])].y)
+                    v1 = (body.vel_x, body.vel_y)
+                    m2 = bodies[body_overlaped_id].mass  # masa del cuerpo 1
+                    v2 = (bodies[body_overlaped_id].vel_x, bodies[body_overlaped_id].vel_y)  # velocidad inicial del cuerpo 1
 
-            v1_final, v2_final = Body.inelastic_collision_2d(m1, v1, m2, v2, e, pos1, pos2)
+                    if v1[0]**2 + v1[1]**2 > v2[0]**2 + v2[1]**2:
+                        biggest_vel = body.id
+                    else:
+                        biggest_vel = body_overlaped_id
 
-            body.vel_x, body.vel_y = v1_final
-            bodies[str(overlaps[0])].vel_x, bodies[str(overlaps[0])].vel_y = v2_final  
+                    overlap_distance = (body.radius + bodies[body_overlaped_id].radius) - np.sqrt((body.x - bodies[body_overlaped_id].x)**2 + (body.y - bodies[body_overlaped_id].y)**2)
+                    if overlap_distance > 0:
+                        # print("corrected")
+                        direction = np.array([body.x - bodies[body_overlaped_id].x, body.y - bodies[body_overlaped_id].y]) / np.linalg.norm([body.x - bodies[body_overlaped_id].x, body.y - bodies[body_overlaped_id].y])
+                        if biggest_vel == body.id:
+                            body.x += overlap_distance * direction[0]
+                            body.y += overlap_distance * direction[1]
+                        else:
+                            bodies[body_overlaped_id].x -= overlap_distance * direction[0]
+                            bodies[body_overlaped_id].y -= overlap_distance * direction[1]
 
-            overlap_distance = (body.radius + bodies[str(overlaps[0])].radius) - np.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
-            if overlap_distance > 0:
-                correction = overlap_distance / 2
-                direction = np.array([pos1[0] - pos2[0], pos1[1] - pos2[1]]) / np.linalg.norm([pos1[0] - pos2[0], pos1[1] - pos2[1]])
-                body.x += correction * direction[0]
-                body.y += correction * direction[1]
-                bodies[str(overlaps[0])].x -= correction * direction[0]
-                bodies[str(overlaps[0])].y -= correction * direction[1]"""
+                    pos1 = (body.x, body.y)
+                    pos2 = (bodies[body_overlaped_id].x, bodies[body_overlaped_id].y)
 
-            mass = (body.mass + bodies[str(overlaps[0])].mass)*0.707
+                    v1_final, v2_final = Body.inelastic_collision_2d(m1, v1, m2, v2, pos1, pos2)
 
-            position = (body.x+bodies[str(overlaps[0])].x)/2, (body.y+bodies[str(overlaps[0])].y)/2
+                    body.vel_x, body.vel_y = v1_final
+                    bodies[body_overlaped_id].vel_x, bodies[body_overlaped_id].vel_y = v2_final
 
-            velocidadx = (body.vel_x * body.mass + bodies[str(overlaps[0])].vel_x * bodies[str(overlaps[0])].mass) / (body.mass + bodies[str(overlaps[0])].mass)
-            velocidady = (body.vel_y * body.mass + bodies[str(overlaps[0])].vel_y * bodies[str(overlaps[0])].mass) / (body.mass + bodies[str(overlaps[0])].mass)
-            vel = velocidadx, velocidady
+                    # las siguientes lineas se usan para llevar un registro de las colisiones y el momento en que ocurrieron, para luego analizar si una colision volvio a ocurrir menos de 0.3 segundos despues de la anterior, y en caso de que sea asi, sumar a un conteo q si llega a 10 se fusionan los cuerpos. si el tiempo es mayor a esos 0.3 entonces se reinicia el timer
 
-            ids = body.id, overlaps[0]
+                    fuse = False
+                    index = None
 
-            delete_body = True
+                    if body.id + body_overlaped_id in collitions_history:  # como depende de q cuerpo se analice primero puede estar registrada de dos maneras. str(body.id + body_overlaped_id) o invertido str(body_overlaped_id + body.id). por eso se checkea ambas opciones
+                        index = body.id + body_overlaped_id
+                    elif body_overlaped_id + body.id in collitions_history:
+                        index = body_overlaped_id + body.id
+                    else:  # si la colision no fue registrada, la registramos por primera vez, con tiempo actual y conteo de choques 0
+                        collitions_history[body_overlaped_id + body.id] = [time.time(), 0]
 
-            break
+                    if index != None:  # si esta registrada
 
-        if body.id != selected_body:
+                        if time.time() - collitions_history[index][0] < 0.4:  # si la ultima colision fue hace menos de 0.5 segundos
+                            collitions_history[index][1] += 1  # sumamos a un contador de colisiones "continuas"
+                            if collitions_history[index][1] > 20:  # si llevamos mas de 20 continuas vamos a eliminar el registro de las colisiones de estos dos cuerpos porque prontamente los fusionaremos
+                                fuse = True
 
+                        else:  # si la ultima colision fue hace mas de 0.5 segundos entonces reinicamos el contador de colisiones continuas y volvermos a contar
+                            collitions_history[index][1] = 0
+                        collitions_history[index][0] = time.time()  # volvemos a contar 0.5 segundos desde ahora para la proxima colision
+
+                    if fuse:
+
+                        collitions_history.pop(index)
+
+                        mass = body.mass + bodies[body_overlaped_id].mass
+
+                        largest_body = max((body, bodies[body_overlaped_id]), key=lambda body: body.mass)
+                        position = (largest_body.x, largest_body.y)  # Creamos una nueva posición igual a la del cuerpo más masivo
+
+                        velocidadx = (body.vel_x * body.mass + bodies[body_overlaped_id].vel_x * bodies[body_overlaped_id].mass) / (body.mass + bodies[body_overlaped_id].mass)
+                        velocidady = (body.vel_y * body.mass + bodies[body_overlaped_id].vel_y * bodies[body_overlaped_id].mass) / (body.mass + bodies[body_overlaped_id].mass)
+                        vel = velocidadx, velocidady
+
+                        ids = body.id, body_overlaped_id
+
+                        delete_body = True
+
+                        break
+
+        if not follow_mouse_body or body.id != selected_body:  # solo actualizamos la posicion del cuerpo basada en la atraccion grav q siente si no es el cuerpo seleccionado (no esta siendo movido con el mouse)
             fx, fy = body.calculate_force(bodies.values())
-            body.update_a_v_pos_based_on_force(fx, fy, time_interval*Universe.time_scale)
-        body.update_pos_based_on_vel(time_interval*Universe.time_scale)
-        # print(fx)
+            body.update_a_v_based_on_force(fx, fy, time_interval*Universe.time_scale)
+            body.update_pos_based_on_vel(time_interval*Universe.time_scale)
 
-        body.update_px_based_on_pos()
-
-    if delete_body:
+    if delete_body:  # mas q eliminar un cuerpo lo que hacemos es eliminar los dos pero crear otro q tenga la suma de masa de los dos y la posicion dle mas grande, etc
 
         bodies["new"] = Body(mass, position, vel)
+        bodies["new"].x_px, bodies["new"].y_px = Universe.meters_to_pixels(position)
+        bodies["new"].update_radius_px()
 
         id = bodies["new"].id
         bodies[id] = bodies.pop("new")
@@ -189,9 +221,6 @@ def calculations(time_interval):
         bodies.pop(ids[0])
         bodies.pop(ids[1])
 
-        # Universe.set_px_m_ratio(bodies)
-
-        global arrow_velocity_mode
         if arrow_velocity_mode[0]:  # si estabamos modificando la velocidad de un cuerpo con el modo flecha, entonces actualizamos el id y selected body para q empiece a modificar el nuevo
             arrow_velocity_mode = (True, id)  # se desactiva el modo flechas si venia activado
             selected_body = id
@@ -199,10 +228,6 @@ def calculations(time_interval):
             if selected_body in ids:  # si el cuerpo seleccionado es alguno de los q que se borro, entonces deseleccionamos el cuerpo seleccionado
                 selected_body = None
                 follow_mouse_body = False
-
-        for body in bodies.values():
-            body.update_radius_px()
-        pass
 
 
 global last_iteration_time
@@ -313,9 +338,7 @@ while True:
                     new_pos = Universe.pixels_to_meters(event.pos)
                     pre_pos = Universe.pixels_to_meters((bodies[arrow_velocity_mode[1]].x_px, bodies[arrow_velocity_mode[1]].y_px))
 
-                    mult = 4
-
-                    bodies[selected_body].vel_x, bodies[selected_body].vel_y = (new_pos[0]-pre_pos[0])*mult, (new_pos[1]-pre_pos[1])*mult
+                    bodies[selected_body].vel_x, bodies[selected_body].vel_y = (new_pos[0]-pre_pos[0])*Universe.arrow_vel_mult, (new_pos[1]-pre_pos[1])*Universe.arrow_vel_mult
 
                     arrow_velocity_mode = (False, None)
 
@@ -338,6 +361,8 @@ while True:
                 sys.exit()
             elif event.key == pygame.K_SPACE:
                 Universe.time_scale = Universe.time_scale*4  # si presionas el espacio se multiplica el time_scale por 4 asi va mas rapido
+            elif event.key == pygame.K_b:
+                Universe.time_scale = Universe.time_scale*-1  # si presionas la b se invierte el time_scale asi va en reversa la simulacion
 
             elif event.key == pygame.K_c:
                 Universe.camera_x = Engine.window_width/2
@@ -346,14 +371,20 @@ while True:
             elif event.key == pygame.K_k:
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
-
+                Universe.px_to_m_ratio = (60/30)
+                Universe.zoom = 0.5
                 bodies = {}
+
             elif event.key == pygame.K_p:
                 pause_simulation = not pause_simulation
+            elif event.key == pygame.K_r:
+                Universe.set_px_m_ratio(bodies, True)
 
         elif event.type == pygame.KEYUP:  # si se suelta una tecla
             if event.key == pygame.K_SPACE:  # si se suelta es espacio entonces restauremos el time_scale al antiguo
                 Universe.time_scale = Universe.time_scale/4
+            elif event.key == pygame.K_b:  # si se suelta la b entonces restauremos el time_scale al antiguo
+                Universe.time_scale = Universe.time_scale*-1
 
         elif event.type == pygame.QUIT:
             pygame.quit()

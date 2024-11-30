@@ -11,7 +11,11 @@ class Universe:
 
     px_to_m_ratio = (60/30)
 
-    time_scale = 0.000000005
+    arrow_vel_mult = 3
+
+    restitution_coefficient = 0.4  # coeficiente de restitución (% de conservacion de la energía mecanica en el choque)
+
+    time_scale = 0.000000003  # 0.000000005
 
     universe_color = (5, 5, 7)
     grid_color = (120, 120, 120)
@@ -26,8 +30,8 @@ class Universe:
         (255, 255, 255)  # Blanco (alto)
     )
 
-    body_creation_colors = ((147, 89, 68),
-                            (227, 170, 57))
+    body_creation_colors = ((136, 82, 62),
+                            (238, 172, 47))
 
     zoom = 0.5
 
