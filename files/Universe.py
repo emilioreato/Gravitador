@@ -27,8 +27,8 @@ class Universe:
     field_colors = (
         (6, 5, 6),      # Negro (bajo)
         (128, 0, 32),   # Bordó (intermedio-bajo)
-        (255, 15, 5),    # Rojo (intermedio)
-        (255, 170, 5),  # Naranja (intermedio-alto)
+        (180, 15, 15),    # Rojo (intermedio)
+        (255, 170, 15),  # Naranja (intermedio-alto)
         (255, 255, 255)  # Blanco (alto)
     )
 
@@ -60,7 +60,7 @@ class Universe:
         # Iteramos sobre todos los cuerpos para calcular el campo gravitacional en el punto (px, py)
         for body in bodies.values():
             # Acumulamos la magnitud total
-            g_total += Universe.calculate(Universe.G, body.mass, body.x, px, body.y, py)  # le sumamos la Magnitud de la intensidad gravitacional de este cuerpo
+            g_total += Universe.intensity_operation(Universe.G, body.mass, body.x, px, body.y, py)  # le sumamos la Magnitud de la intensidad gravitacional de este cuerpo
 
         return g_total
 
