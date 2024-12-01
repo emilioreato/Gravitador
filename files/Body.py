@@ -161,6 +161,8 @@ class Body:
 
     def update_radius_px(self):
         self.radius_px = Universe.scalar_meters_to_pixels(self.radius)
+        if self.radius_px < 1:
+            self.radius_px = 1
 
     def is_clicked(self, mouse_pos):
         return (mouse_pos[0]-self.x_px)**2 + (mouse_pos[1]-self.y_px)**2 <= self.radius_px**2

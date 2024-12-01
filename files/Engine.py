@@ -32,7 +32,7 @@ class Engine:
     win_aspect_ratio = 16/10
     window_height = int(read_line_in_txt("../settings.txt", "window_height(px)"))
     wh = window_height
-    window_width = window_height * win_aspect_ratio
+    window_width = int(window_height * win_aspect_ratio)
     window_size = (window_width, window_height)
 
     # font1 = pygame.font.SysFont(None, 20)

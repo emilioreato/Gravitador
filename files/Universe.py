@@ -3,24 +3,28 @@ import pygame
 import numpy as np
 from scipy.ndimage import zoom
 import cv2
+import math
 
 
 class Universe:
 
-    G = 4500  # 6.674*10**(-18)
+    G = 4300  # 6.674*10**(-18)
 
-    px_to_m_ratio = (60/30)
+    px_to_m_ratio = 2
 
-    arrow_vel_mult = 3
+    arrow_vel_mult = 3.5
 
     restitution_coefficient = 0.4  # coeficiente de restitución (% de conservacion de la energía mecanica en el choque)
 
     time_scale = 0.000000003  # 0.000000005
 
     universe_color = (5, 5, 7)
-    grid_color = (120, 120, 120)
+    axis_color = (118, 118, 118)
+    grid_color = (70, 70, 70)
 
-    show_axis_config = Engine.read_line_in_txt("../settings.txt", "show_axis")
+    show_axis = True
+    show_grid = True
+    show_details = True
 
     field_colors = (
         (6, 5, 6),      # Negro (bajo)
@@ -120,11 +124,26 @@ class Universe:
         # Convertir el arreglo de colores a una superficie de Pygame
 
     def draw_axis():
-        if Universe.show_axis_config == "yes":
-            x, y = (Universe.camera_x, Universe.camera_y)
 
-            pygame.draw.line(Engine.screen, Universe.grid_color, (0, y), (Engine.window_width, y), 1)  # Línea hacia abajo
-            pygame.draw.line(Engine.screen,  Universe.grid_color, (x, 0), (x, Engine.window_height),  1)  # Línea hacia la izquierda
+        if Universe.show_grid:
+
+            grid_spacing = int(Universe.scalar_meters_to_pixels(280))
+
+            mult = 2**round(math.log2(grid_spacing / (280/2)))
+
+            print(mult)
+            grid_spacing = int(grid_spacing/mult)
+
+            for x_offset in range(int(Universe.camera_x % grid_spacing), Engine.window_width, grid_spacing):  # Líneas horizontales
+                pygame.draw.line(Engine.screen, Universe.grid_color, (x_offset, 0), (x_offset, Engine.window_height), 1)
+
+            for y_offset in range(int(Universe.camera_y % grid_spacing), Engine.window_height, grid_spacing):  # Líneas verticales
+                pygame.draw.line(Engine.screen, Universe.grid_color, (0, y_offset), (Engine.window_width, y_offset), 1)
+
+        if Universe.show_axis:
+
+            pygame.draw.line(Engine.screen, Universe.axis_color, (0, Universe.camera_y), (Engine.window_width, Universe.camera_y), 2)  # Línea hacia abajo
+            pygame.draw.line(Engine.screen,  Universe.axis_color, (Universe.camera_x, 0), (Universe.camera_x, Engine.window_height),  2)  # Línea hacia la izquierda
 
     def set_px_m_ratio(bodies=None, re_check=True, mouse_pos=None):  # this lets you set the bounders based on the particles in screen. zoom initially set as -20% (1.2)
         if re_check:  # si se pasa re_check tambien se tiene q pasar bodies para
@@ -135,6 +154,7 @@ class Universe:
             coor_x, coor_y = Universe.pixels_to_meters(mouse_pos)  # si se pasa coordenadas (mouse_pos) se usaran para dirigir hacia donde ira el zoom
 
         # se elige el ratio basado en el eje q esta mas apretado con cuerpos en pantalla. osea q si tienes muchos cuerpos verticalmente alineados se calculara en base a la distancia entre el mas alto y el menos alto, no influira lo q tengas en el eje y a no ser q la distancia entre el mas a la izq y el mas a la der sea mayor a la distancia entre el mas alto y el mas bajo pero siempre aplicando la relacion de aspecto de la pantalla q es 16:9.
+
         if Universe.max_x/Engine.window_width >= Universe.max_y/Engine.window_height:
             Universe.px_to_m_ratio = (2*Universe.max_x)/(Engine.window_width*Universe.zoom)
         else:

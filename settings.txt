@@ -1,6 +1,4 @@
 fps: system
-show_grid: yes
-show_axis: yes
 field_resolution: 55
 window_height(px): 600
 

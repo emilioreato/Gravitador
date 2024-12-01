@@ -356,29 +356,42 @@ while True:
                     body.update_radius_px()
 
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE:  # cierra el programa
                 pygame.quit()
                 sys.exit()
+
             elif event.key == pygame.K_SPACE:
                 Universe.time_scale = Universe.time_scale*4  # si presionas el espacio se multiplica el time_scale por 4 asi va mas rapido
+
             elif event.key == pygame.K_b:
                 Universe.time_scale = Universe.time_scale*-1  # si presionas la b se invierte el time_scale asi va en reversa la simulacion
 
-            elif event.key == pygame.K_c:
+            elif event.key == pygame.K_c:  # centra la camara
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
 
-            elif event.key == pygame.K_k:
+            elif event.key == pygame.K_k:  # reinicia la simulacion en pocas palabras
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
                 Universe.px_to_m_ratio = (60/30)
                 Universe.zoom = 0.5
                 bodies = {}
 
-            elif event.key == pygame.K_p:
+            elif event.key == pygame.K_p:  # pausa y despausa la simulacion
                 pause_simulation = not pause_simulation
-            elif event.key == pygame.K_r:
+
+            elif event.key == pygame.K_a:
+                Universe.show_axis = not Universe.show_axis
+            elif event.key == pygame.K_g:
+                Universe.show_grid = not Universe.show_grid
+            elif event.key == pygame.K_d:
+                Universe.show_details = not Universe.show_details
+
+            elif event.key == pygame.K_r:  # en base a los cuerpos existentes recalcula el px_m_ratio y el zoom para que se vean todos los cuerpos en pantalla
+                Universe.zoom = 0.75
                 Universe.set_px_m_ratio(bodies, True)
+                for body in bodies.values():  # actualizamos el radio de cada cuerpo en pixeles en base a la nueva proporcion px_m
+                    body.update_radius_px()
 
         elif event.type == pygame.KEYUP:  # si se suelta una tecla
             if event.key == pygame.K_SPACE:  # si se suelta es espacio entonces restauremos el time_scale al antiguo
