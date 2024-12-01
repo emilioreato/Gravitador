@@ -233,11 +233,10 @@ def calculations(time_interval):
                 follow_mouse_body = False
 
 
-global last_iteration_interval
-last_iteration_interval = time.perf_counter()
+time.perf_counter()
 
 ### MAIN PYGAME LOOP ###
-count = 0
+
 while True:
 
     for event in pygame.event.get():
@@ -363,27 +362,21 @@ while True:
             if event.key == pygame.K_ESCAPE:  # cierra el programa
                 pygame.quit()
                 sys.exit()
-
             elif event.key == pygame.K_SPACE:
                 Universe.time_scale = Universe.time_scale*4  # si presionas el espacio se multiplica el time_scale por 4 asi va mas rapido
-
             elif event.key == pygame.K_b:
                 Universe.time_scale = Universe.time_scale*-1  # si presionas la b se invierte el time_scale asi va en reversa la simulacion
-
             elif event.key == pygame.K_c:  # centra la camara
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
-
             elif event.key == pygame.K_k:  # reinicia la simulacion en pocas palabras
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
                 Universe.px_to_m_ratio = (60/30)
                 Universe.zoom = 0.5
                 bodies = {}
-
             elif event.key == pygame.K_p:  # pausa y despausa la simulacion
                 pause_simulation = not pause_simulation
-
             elif event.key == pygame.K_a:
                 UI_MANAGER.show_axis = not UI_MANAGER.show_axis
             elif event.key == pygame.K_g:
@@ -400,7 +393,6 @@ while True:
                 UI_MANAGER.show_circles = not UI_MANAGER.show_circles
             elif event.key == pygame.K_f:
                 UI_MANAGER.show_field = not UI_MANAGER.show_field
-
             elif event.key == pygame.K_r:  # en base a los cuerpos existentes recalcula el px_m_ratio y el zoom para que se vean todos los cuerpos en pantalla
                 Universe.zoom = 0.75
                 Universe.set_px_m_ratio(bodies, True)
@@ -417,13 +409,9 @@ while True:
             pygame.quit()
             sys.exit()
 
-    last_iteration_interval = time.perf_counter() - last_iteration_interval  # lets calculate preciosely the time between iterations to make the calculations more accurate
-    count += 1
-    print(last_iteration_interval, count)
-
     if not pause_simulation:
-        calculations(last_iteration_interval)  # calling the calculations main function
+        calculations(time.perf_counter())  # llamando a la funcion de calculos principal
 
-    draw()  # calling the draw main function
+    draw()  # llamando a la funcion draw principal
 
-    Engine.timer.tick(Engine.fps)  # set the fps to the maximun possible
+    Engine.timer.tick(Engine.fps)  # ajustando fps
