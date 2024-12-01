@@ -4,6 +4,12 @@ import pygame
 
 class UI_MANAGER:
 
+    show_axis = True
+    show_grid = True
+    show_details = True
+    show_circles = True
+    show_field = True
+
     @staticmethod
     def load_resoruces():
 

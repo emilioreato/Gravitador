@@ -6,9 +6,7 @@ from Engine import Engine
 from UI import UI_MANAGER, Simulation_Ui, Help_Ui
 import pygame
 import sys
-import win32api
 import time
-import random
 import numpy as np
 import webbrowser
 import os
@@ -57,6 +55,9 @@ body_creation_mode = (False, None)
 global selected_body
 selected_body = None
 
+global already_created_a_body
+already_created_a_body = False
+
 global bodies
 bodies = {}
 global collitions_history
@@ -86,11 +87,13 @@ def collidepoint(rect, point_pos):
 
 
 def draw():
-    Engine.screen.fill(Universe.universe_color)
 
     if active_uis["simulation"]:
 
-        # Universe.draw_field(bodies)
+        if UI_MANAGER.show_field:
+            Universe.draw_field(bodies)
+        else:
+            Engine.screen.fill(Universe.universe_color)
 
         Universe.draw_axis()
 
@@ -124,7 +127,7 @@ def calculations(time_interval):
 
             overlaps = body.check_overlap_by_brute_force(bodies)  # checkea si el cuerpo actual esta colisionando con algun otro cuerpo de la lista de cuerpos.
 
-            if overlaps:
+            if overlaps:  # ESTO SE EJECUTA SI HAY COLISIONES ENTRE CUERPOS
 
                 m1 = body.mass
 
@@ -230,11 +233,11 @@ def calculations(time_interval):
                 follow_mouse_body = False
 
 
-global last_iteration_time
-last_iteration_time = time.perf_counter()
+global last_iteration_interval
+last_iteration_interval = time.perf_counter()
 
 ### MAIN PYGAME LOOP ###
-
+count = 0
 while True:
 
     for event in pygame.event.get():
@@ -323,7 +326,8 @@ while True:
                     id = bodies["new"].id
                     bodies[id] = bodies.pop("new")
 
-                    if len(bodies) < 2:
+                    if not already_created_a_body:
+                        already_created_a_body = True
                         Universe.set_px_m_ratio(bodies)
 
                     for body in bodies.values():
@@ -346,7 +350,7 @@ while True:
                     follow_mouse_camera = (False, None)  # dejamos de seguir el movimiento del mouse para la camara
 
         elif event.type == pygame.MOUSEWHEEL:
-            if len(bodies) > 0:  # si hay al menos un cuerpo en pantalla
+            if already_created_a_body:  # si hay al menos un cuerpo en pantalla
                 if event.y > 0:  # si rueda hacia arriba
                     Universe.zoom += Universe.zoom*0.06  # aumentamos el zoom en un 6%
                 else:
@@ -381,11 +385,21 @@ while True:
                 pause_simulation = not pause_simulation
 
             elif event.key == pygame.K_a:
-                Universe.show_axis = not Universe.show_axis
+                UI_MANAGER.show_axis = not UI_MANAGER.show_axis
             elif event.key == pygame.K_g:
-                Universe.show_grid = not Universe.show_grid
+                UI_MANAGER.show_grid = not UI_MANAGER.show_grid
             elif event.key == pygame.K_d:
-                Universe.show_details = not Universe.show_details
+                UI_MANAGER.show_details = not UI_MANAGER.show_details
+            elif event.key == pygame.K_h:
+                active_uis["help"] = not active_uis["help"]
+                if active_uis["help"]:
+                    pause_simulation = True
+                else:
+                    pause_simulation = False
+            elif event.key == pygame.K_s:
+                UI_MANAGER.show_circles = not UI_MANAGER.show_circles
+            elif event.key == pygame.K_f:
+                UI_MANAGER.show_field = not UI_MANAGER.show_field
 
             elif event.key == pygame.K_r:  # en base a los cuerpos existentes recalcula el px_m_ratio y el zoom para que se vean todos los cuerpos en pantalla
                 Universe.zoom = 0.75
@@ -403,10 +417,12 @@ while True:
             pygame.quit()
             sys.exit()
 
-    last_iteration_time = time.perf_counter() - last_iteration_time  # lets calculate preciosely the time between iterations to make the calculations more accurate
+    last_iteration_interval = time.perf_counter() - last_iteration_interval  # lets calculate preciosely the time between iterations to make the calculations more accurate
+    count += 1
+    print(last_iteration_interval, count)
 
     if not pause_simulation:
-        calculations(last_iteration_time)  # calling the calculations main function
+        calculations(last_iteration_interval)  # calling the calculations main function
 
     draw()  # calling the draw main function
 

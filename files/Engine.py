@@ -17,17 +17,13 @@ class Engine:
         if not os.path.exists(file_path):  # creates the file if it doesnt exist
             with open(file_path, 'w') as file:
                 file.write("fps: system \nshow_grid: yes\nshow_axis: yes\nfield_resolution: 40\nwindow_height(px): 720")  # writes the default values
-
         else:
             with open(file_path, 'r') as file:
                 lines = file.readlines()
 
             for line in lines:
                 if text_to_search in line:
-                    # print("".join(line.split(": ")[1:]).strip())
                     return "".join(line.split(": ")[1:]).strip()  # this returns the exact information i want. not the whole line
-
-    # units_scale = 10**10
 
     win_aspect_ratio = 16/10
     window_height = int(read_line_in_txt("../settings.txt", "window_height(px)"))
@@ -35,14 +31,13 @@ class Engine:
     window_width = int(window_height * win_aspect_ratio)
     window_size = (window_width, window_height)
 
-    # font1 = pygame.font.SysFont(None, 20)
-
     UI_COLORS = [
         (140, 140, 140),  # Blanco (alto)
         (255, 165, 0),    # Naranja (intermedio-alto)
         (255, 0, 0),    # Rojo (intermedio)
         (128, 0, 32),   # Bordó (intermedio-bajo)
         (0, 0, 0),      # Negro (bajo)
+        (220, 220, 220),      # gris claro (bajo)
     ]
 
     def set_up():
@@ -57,8 +52,6 @@ class Engine:
         Engine.timer = pygame.time.Clock()
 
         Engine.screen = pygame.display.set_mode(Engine.window_size)
-
-        # Engine.alpha_surface = pygame.Surface((Engine.window_width, Engine.window_height), pygame.SRCALPHA)  # SRCALPHA permite usar alpha
 
         pygame.display.set_caption("Gravitum: Simulador de gravitación 2D [by: Aaron, Javier & Emilio]")
 

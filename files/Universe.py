@@ -1,4 +1,5 @@
 from Engine import Engine
+from UI import UI_MANAGER
 import pygame
 import numpy as np
 from scipy.ndimage import zoom
@@ -22,10 +23,6 @@ class Universe:
     axis_color = (118, 118, 118)
     grid_color = (70, 70, 70)
 
-    show_axis = True
-    show_grid = True
-    show_details = True
-
     field_colors = (
         (6, 5, 6),      # Negro (bajo)
         (128, 0, 32),   # Bordó (intermedio-bajo)
@@ -38,6 +35,13 @@ class Universe:
                             (238, 172, 47))
 
     zoom = 0.5
+
+    grid_spacing_in_meters = 220
+    grid_spacing = 110
+    actual_grid_mult = 1
+
+    max_x = 1
+    max_y = 1
 
     field_render_res_x = int(Engine.read_line_in_txt("../settings.txt", "field_resolution"))
     field_render_res_y = int(field_render_res_x/(Engine.win_aspect_ratio))
@@ -99,7 +103,7 @@ class Universe:
 
         # dots = np.clip(dots, 0, 255)
 
-        resized_image = cv2.resize(dots, (int(Engine.window_height), int(Engine.window_width)), interpolation=cv2.INTER_CUBIC)  # cv2.INTER_CUBIC  INTER_LINEAR
+        resized_image = cv2.resize(dots, (Engine.window_height, Engine.window_width), interpolation=cv2.INTER_LINEAR)  # cv2.INTER_CUBIC  INTER_LINEAR
 
         # print(f"Forma de la imagen original: {dots.shape}", f"Forma de la imagen original: {resized_image.shape}")  # Esto debe ser (alto, ancho, 3)
 
@@ -125,25 +129,27 @@ class Universe:
 
     def draw_axis():
 
-        if Universe.show_grid:
+        if UI_MANAGER.show_grid:
 
-            grid_spacing = int(Universe.scalar_meters_to_pixels(280))
-
-            mult = 2**round(math.log2(grid_spacing / (280/2)))
-
-            print(mult)
-            grid_spacing = int(grid_spacing/mult)
-
-            for x_offset in range(int(Universe.camera_x % grid_spacing), Engine.window_width, grid_spacing):  # Líneas horizontales
+            for x_offset in range(int(Universe.camera_x % Universe.grid_spacing), Engine.window_width, Universe.grid_spacing):  # Líneas horizontales
                 pygame.draw.line(Engine.screen, Universe.grid_color, (x_offset, 0), (x_offset, Engine.window_height), 1)
 
-            for y_offset in range(int(Universe.camera_y % grid_spacing), Engine.window_height, grid_spacing):  # Líneas verticales
+            for y_offset in range(int(Universe.camera_y % Universe.grid_spacing), Engine.window_height, Universe.grid_spacing):  # Líneas verticales
                 pygame.draw.line(Engine.screen, Universe.grid_color, (0, y_offset), (Engine.window_width, y_offset), 1)
 
-        if Universe.show_axis:
+            if UI_MANAGER.show_details:
+                text = Engine.font1.render(f"cell value: {Universe.grid_spacing_in_meters/Universe.actual_grid_mult:.1f} m", True, Engine.UI_COLORS[0])
+                Engine.screen.blit(text, (Engine.window_width / 1.18, Engine.window_height / 50))
 
-            pygame.draw.line(Engine.screen, Universe.axis_color, (0, Universe.camera_y), (Engine.window_width, Universe.camera_y), 2)  # Línea hacia abajo
-            pygame.draw.line(Engine.screen,  Universe.axis_color, (Universe.camera_x, 0), (Universe.camera_x, Engine.window_height),  2)  # Línea hacia la izquierda
+        if UI_MANAGER.show_axis:
+
+            if UI_MANAGER.show_grid:
+                w = 2
+            else:
+                w = 1
+
+            pygame.draw.line(Engine.screen, Universe.axis_color, (0, Universe.camera_y), (Engine.window_width, Universe.camera_y), w)  # Línea hacia abajo
+            pygame.draw.line(Engine.screen,  Universe.axis_color, (Universe.camera_x, 0), (Universe.camera_x, Engine.window_height),  w)  # Línea hacia la izquierda
 
     def set_px_m_ratio(bodies=None, re_check=True, mouse_pos=None):  # this lets you set the bounders based on the particles in screen. zoom initially set as -20% (1.2)
         if re_check:  # si se pasa re_check tambien se tiene q pasar bodies para
@@ -169,6 +175,8 @@ class Universe:
             Universe.camera_x += offset_x  # ese desfase se le suma a la posicion de la camara para que el zoom se haga en la posicion del mouse
             Universe.camera_y += offset_y
 
+        Universe.update_grid_spacing()
+
     @staticmethod
     def pixels_to_meters(pos):
         return ((pos[0]-Universe.camera_x)*Universe.px_to_m_ratio, (pos[1]-Universe.camera_y)*Universe.px_to_m_ratio)
@@ -184,3 +192,18 @@ class Universe:
     @staticmethod
     def scalar_meters_to_pixels(distance_module):
         return distance_module/Universe.px_to_m_ratio
+
+    @staticmethod
+    def update_grid_spacing():
+
+        grid_spacing = int(Universe.scalar_meters_to_pixels(Universe.grid_spacing_in_meters))
+
+        value = grid_spacing / (Universe.grid_spacing_in_meters/2)
+
+        if not value == 0:
+            Universe.actual_grid_mult = 2**round(math.log2(value))
+
+        Universe.grid_spacing = int(grid_spacing/Universe.actual_grid_mult)
+
+        if Universe.grid_spacing < 32:
+            Universe.grid_spacing = 10000

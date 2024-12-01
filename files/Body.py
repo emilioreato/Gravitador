@@ -3,6 +3,7 @@ import string
 import random
 import pygame
 from Engine import Engine
+from UI import UI_MANAGER
 from Universe import Universe
 import numpy as np
 import math
@@ -35,7 +36,14 @@ class Body:
         self.vel_x,  self.vel_y = vel  # this should be a tuple with x and y axis velocity
 
     def draw(self):
-        pygame.draw.circle(Engine.screen, self.color, (self.x_px, self.y_px), self.radius_px)  # self.color
+        if UI_MANAGER.show_circles:
+            pygame.draw.circle(Engine.screen, self.color, (self.x_px, self.y_px), self.radius_px)  # self.color
+        if UI_MANAGER.show_details:
+            line1 = Engine.font1.render(f"{self.mass/1000:.0f} mil kg", True, Engine.UI_COLORS[5])
+            line2 = Engine.font1.render(f"{(self.vel_x**2 + self.vel_y**2)**0.5:.1f} m/s", True, Engine.UI_COLORS[5])
+
+            Engine.screen.blit(line1, (self.x_px - Engine.window_height/30, self.y_px - Engine.window_height/50))
+            Engine.screen.blit(line2, (self.x_px - Engine.window_height/30, self.y_px - Engine.window_height/50 + line1.get_height()))
 
     def move(self, pos):  # se le pasa una pos en pixeles
         self.x_px, self.y_px = pos  # se actualiza la posicion en pixeles
@@ -214,7 +222,7 @@ class Body:
 
         pygame.draw.circle(Engine.screen, color, creation_pos, radius_px)
 
-        text = Engine.font1.render(f"{Universe.scalar_pixels_to_meters(radius_px):.1f} kg", True, Engine.UI_COLORS[0])
+        text = Engine.font1.render(f"{Universe.scalar_pixels_to_meters(radius_px) * 5:.0f} mil kg", True, Engine.UI_COLORS[0])
 
         Engine.screen.blit(text, (mouse_pos[0]+Engine.wh//30, mouse_pos[1]-Engine.wh//30))
 
