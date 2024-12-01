@@ -393,6 +393,11 @@ while True:
                 UI_MANAGER.show_circles = not UI_MANAGER.show_circles
             elif event.key == pygame.K_f:
                 UI_MANAGER.show_field = not UI_MANAGER.show_field
+                if UI_MANAGER.show_field:
+                    Universe.time_scale = Universe.time_scale*3
+                else:
+                    Universe.time_scale = Universe.time_scale/3
+
             elif event.key == pygame.K_r:  # en base a los cuerpos existentes recalcula el px_m_ratio y el zoom para que se vean todos los cuerpos en pantalla
                 Universe.zoom = 0.75
                 Universe.set_px_m_ratio(bodies, True)

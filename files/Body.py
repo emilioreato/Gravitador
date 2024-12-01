@@ -60,17 +60,17 @@ class Body:
 
             dx = other_body.x - self.x  # separacion en eje x
             dy = other_body.y - self.y  # separacion en eje y
-            distance = (dx**2 + dy**2)**0.5  # math.sqrt(dx**2 + dy**2)  # np.sqrt(dx**2 + dy**2)  # modulo de distancia
-
-            if distance == 0:
-                continue  # Evitar division por cero
+            distance = dx**2 + dy**2  # math.sqrt(dx**2 + dy**2)  # np.sqrt(dx**2 + dy**2)  # modulo de distancia
 
             # Magnitud de la fuerza gravitacional
-            force = G * self.mass * other_body.mass / distance**2  # no va negativa porque el vector dx dy ya se encarga a continuacion
+            force = G * self.mass * other_body.mass / distance  # no va negativa porque el vector dx dy ya se encarga a continuacion
+            # tampoco va la distancia el cuadrado ya que no estamos haciendole la raiz cuadrada cuando calculalos la distancia
+
+            squared_distance = math.sqrt(distance)
 
             # Descomponer la fuerza en componentes x e y
-            Fx += force * (dx / distance)  # esto ya esta considerando la direccion sobre el eje x con el q la fuerza actua al incluir dx
-            Fy += force * (dy / distance)
+            Fx += force * (dx / squared_distance)  # esto ya esta considerando la direccion sobre el eje x con el q la fuerza actua al incluir dx
+            Fy += force * (dy / squared_distance)
 
         return Fx, Fy
 
@@ -232,7 +232,3 @@ class Body:
                 radius_px = 2
             return Universe.scalar_pixels_to_meters(radius_px) * 5*10**3, color
             # return 10 ** ((Universe.scalar_pixels_to_meters(radius_px) + 1272006.5) / 294401.3)
-
-
-"""def update_px_based_on_pos(self):
-    self.x_px, self.y_px = Universe.meters_to_pixels((self.x, self.y))"""

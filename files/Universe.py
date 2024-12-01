@@ -5,6 +5,7 @@ import numpy as np
 from scipy.ndimage import zoom
 import cv2
 import math
+from numba import jit
 
 
 class Universe:
@@ -17,7 +18,7 @@ class Universe:
 
     restitution_coefficient = 0.4  # coeficiente de restitución (% de conservacion de la energía mecanica en el choque)
 
-    time_scale = 0.000000003  # 0.000000005
+    time_scale = 0.0000000028  # 0.000000005
 
     universe_color = (5, 5, 7)
     axis_color = (118, 118, 118)
@@ -49,8 +50,8 @@ class Universe:
     camera_x = Engine.window_width / 2
     camera_y = Engine.window_height / 2
 
-    min_g = 500
-    max_g = 10_000_000_000
+    min_g = 5
+    max_g = 10_000_000
 
     def gravitational_intensity_at_point(bodies, px, py):
         # Inicializamos la intensidad gravitacional total
@@ -58,21 +59,15 @@ class Universe:
 
         # Iteramos sobre todos los cuerpos para calcular el campo gravitacional en el punto (px, py)
         for body in bodies.values():
-            # Calculamos la distancia entre el cuerpo y el punto (px, py)
-            dx = body.x - px
-            dy = body.y - py
-            r_squared = dx**2 + dy**2
-
-            if r_squared == 0:  # Evitar división por cero si el punto es exactamente sobre el cuerpo
-                continue
-
-            # Magnitud de la intensidad gravitacional de este cuerpo
-            g_magnitude = Universe.G * body.mass / r_squared
-
             # Acumulamos la magnitud total
-            g_total += g_magnitude
+            g_total += Universe.calculate(Universe.G, body.mass, body.x, px, body.y, py)  # le sumamos la Magnitud de la intensidad gravitacional de este cuerpo
 
         return g_total
+
+    @staticmethod
+    @jit(nopython=True)
+    def intensity_operation(g, mass, x, x1, y, y1):
+        return g * mass / ((x - x1)**2 + (y - y1)**2)
 
     @staticmethod
     def draw_field(bodies):
@@ -87,45 +82,20 @@ class Universe:
 
         for i in range(Universe.field_render_res_x):
             for j in range(Universe.field_render_res_y):
-                px = x_ref + i * distance_x_meters
-                py = y_ref + j * distance_y_meters
 
-                g_module = Universe.gravitational_intensity_at_point(bodies, px, py)*10000
-                # print(g_module)
-                color = Engine.calcular_color(g_module, Universe.min_g, Universe.max_g, Universe.field_colors)
+                g_module = Universe.gravitational_intensity_at_point(bodies, x_ref + i * distance_x_meters, y_ref + j * distance_y_meters)*10
 
-                dots[i, j] = color  # Universe.value_to_rgb(g_module, min_g, max_g)
-
-                # if g_module < Universe.min_g:
-                #    Universe.min_g = g_module
-                # if g_module > Universe.max_g:
-                #    Universe.max_g = g_module
-
-        # dots = np.clip(dots, 0, 255)
+                if g_module < Universe.min_g*18000:
+                    dots[i, j] = (Universe.universe_color)
+                else:
+                    dots[i, j] = Engine.calcular_color(g_module, Universe.min_g, Universe.max_g, Universe.field_colors)  # Universe.value_to_rgb(g_module, min_g, max_g)
 
         resized_image = cv2.resize(dots, (Engine.window_height, Engine.window_width), interpolation=cv2.INTER_LINEAR)  # cv2.INTER_CUBIC  INTER_LINEAR
-
-        # print(f"Forma de la imagen original: {dots.shape}", f"Forma de la imagen original: {resized_image.shape}")  # Esto debe ser (alto, ancho, 3)
-
-        # resized_image = np.uint8(resized_image)
 
         surface = pygame.surfarray.make_surface(resized_image)
 
         # Mostrar la superficie en la pantalla
         Engine.screen.blit(surface, (0, 0))
-
-        # for i in range(dots.shape[0]):
-        # for j in range(dots.shape[1]):
-
-        # color_arr[i, j] = Engine.value_to_rgb(dots[i, j], min_g, max_g)
-
-        # Escalar el arreglo a una resolución más alta
-        # scaled_arr = zoom(dots, (Engine.window_width/Universe.field_render_res_x, Engine.window_height/Universe.field_render_res_y), order=1)
-
-        # Crear un arreglo donde cada valor es un color en función de la intensidad
-        # color_arr = np.zeros((dots.shape[0], dots.shape[1], 3), dtype=np.uint8)  # Arreglo de colores
-
-        # Convertir el arreglo de colores a una superficie de Pygame
 
     def draw_axis():
 
