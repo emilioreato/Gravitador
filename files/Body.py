@@ -23,7 +23,7 @@ class Body:
 
         self.mass = mass
 
-        self.radius = mass / (5*10**3)  # 294401.3 * math.log10(mass) - 1272006.5  # self.mass ** 0.434
+        self.radius = mass / (10*10**3)  # 294401.3 * math.log10(mass) - 1272006.5  # self.mass ** 0.434
         # print(self.radius)
 
         if color == None:
@@ -230,5 +230,5 @@ class Body:
             # print(radius_px)
             if radius_px == 0:
                 radius_px = 2
-            return Universe.scalar_pixels_to_meters(radius_px) * 5*10**3, color
+            return Universe.scalar_pixels_to_meters(radius_px) * 10*10**3, color  # ese numero es el q define la relacion entre masa - radio
             # return 10 ** ((Universe.scalar_pixels_to_meters(radius_px) + 1272006.5) / 294401.3)

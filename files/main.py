@@ -351,9 +351,9 @@ while True:
         elif event.type == pygame.MOUSEWHEEL:
             if already_created_a_body:  # si hay al menos un cuerpo en pantalla
                 if event.y > 0:  # si rueda hacia arriba
-                    Universe.zoom += Universe.zoom*0.06  # aumentamos el zoom en un 6%
+                    Universe.zoom += Universe.zoom*0.035  # aumentamos el zoom en un 4%
                 else:
-                    Universe.zoom -= Universe.zoom*0.06  # sino lo reducimos en un 6%
+                    Universe.zoom -= Universe.zoom*0.035  # sino lo reducimos en un 4%
                 Universe.set_px_m_ratio(None, False, pygame.mouse.get_pos())  # actualizamos la proporcion de pixeles_metros en base al nuevo zoom y a la posicion del mouse
                 for body in bodies.values():  # actualizamos el radio de cada cuerpo en pixeles en base a la nueva proporcion px_m
                     body.update_radius_px()

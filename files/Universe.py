@@ -10,17 +10,17 @@ from numba import jit
 
 class Universe:
 
-    G = 4300  # 6.674*10**(-18)
+    G = 4300  # constante gravitacional universal ajustada para trabajar con valores pequeños. no usamos 6.674*10**(-18) por eficiencia
 
-    px_to_m_ratio = 2
+    px_to_m_ratio = 2  # esto no se toca a no se ser q sepas lo q estas haciendo. esta calibrado y se cambia constantemente con el zoom
 
-    arrow_vel_mult = 3.5
+    arrow_vel_mult = 3.7  # mientras mas alto mas velocidad se le dara a un cuerpo con una flecha del mismo tamaño
 
     restitution_coefficient = 0.4  # coeficiente de restitución (% de conservacion de la energía mecanica en el choque)
 
-    time_scale = 0.0000000028  # 0.000000005
+    time_scale = 0.0000000028  # 0.000000005 simboliza q tan rapido avanza el tiempo en el simulador. es el multiplicador de los nanosegundos entre iteraciones q se usa luego como dt
 
-    universe_color = (5, 5, 7)
+    universe_color = (5, 5, 7)  # colores de algunos elementos del sistema
     axis_color = (118, 118, 118)
     grid_color = (70, 70, 70)
 
@@ -35,7 +35,7 @@ class Universe:
     body_creation_colors = ((136, 82, 62),
                             (238, 172, 47))
 
-    zoom = 0.5
+    zoom = 0.5  # el zoom
 
     grid_spacing_in_meters = 220
     grid_spacing = 110
