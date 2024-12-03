@@ -14,7 +14,7 @@ class Universe:
 
     px_to_m_ratio = 2  # esto no se toca a no se ser q sepas lo q estas haciendo. esta calibrado y se cambia constantemente con el zoom
 
-    arrow_vel_mult = 3.7  # mientras mas alto mas velocidad se le dara a un cuerpo con una flecha del mismo tamaño
+    arrow_vel_mult = 3.8  # mientras mas alto mas velocidad se le dara a un cuerpo con una flecha del mismo tamaño
 
     restitution_coefficient = 0.4  # coeficiente de restitución (% de conservacion de la energía mecanica en el choque)
 
@@ -24,12 +24,40 @@ class Universe:
     axis_color = (118, 118, 118)
     grid_color = (70, 70, 70)
 
+    selected_field_color = 0
     field_colors = (
-        (6, 5, 6),      # Negro (bajo)
-        (128, 0, 32),   # Bordó (intermedio-bajo)
-        (180, 15, 15),    # Rojo (intermedio)
-        (255, 170, 15),  # Naranja (intermedio-alto)
-        (255, 255, 255)  # Blanco (alto)
+        (
+            (5, 5, 6),      # Negro (bajo)
+            (180, 15, 15),   # Rojo (intermedio)
+            (255, 170, 18),  # Naranja (intermedio-alto)
+            (255, 255, 255)  # Blanco (alto)
+        ),
+
+        (
+            (255, 255, 255),  # Blanco (alto)
+            (255, 170, 15),  # Naranja (intermedio-alto)
+            (180, 15, 15),   # Rojo (intermedio)
+            (128, 0, 32),   # Bordó (intermedio-bajo)
+            (6, 5, 7)     # Negro (bajo)
+        ),
+
+        (
+            (15, 0, 25),      # Violeta oscuro (bajo)
+            (50, 20, 80),     # Morado intenso (intermedio-bajo)
+            (100, 50, 160),   # Azul-violeta (intermedio)
+            (150, 200, 250),  # Azul hielo (intermedio-alto)
+            (220, 240, 255)   # Azul pastel (alto)
+        ),
+
+        (
+            (10, 10, 40),    # Azul noche (bajo)
+            (20, 60, 120),   # Azul medio (intermedio-bajo)
+            (100, 150, 200),  # Azul cielo claro (intermedio)
+            (200, 180, 100),  # Amarillo cálido (intermedio-alto)
+            (255, 230, 180)  # Crema suave (alto)
+        ),
+
+
     )
 
     body_creation_colors = ((136, 82, 62),
@@ -77,7 +105,6 @@ class Universe:
         distance_x_meters = Universe.scalar_pixels_to_meters(Engine.window_width/Universe.field_render_res_x)
         distance_y_meters = Universe.scalar_pixels_to_meters(Engine.window_height/Universe.field_render_res_y)
 
-        # dots = np.zeros((Universe.field_render_res_x, Universe.field_render_res_y))
         dots = np.zeros((Universe.field_render_res_x, Universe.field_render_res_y, 3), dtype=np.uint8)
 
         for i in range(Universe.field_render_res_x):
@@ -86,18 +113,17 @@ class Universe:
                 g_module = Universe.gravitational_intensity_at_point(bodies, x_ref + i * distance_x_meters, y_ref + j * distance_y_meters)*10
 
                 if g_module < Universe.min_g*18000:
-                    dots[i, j] = (Universe.universe_color)
+                    dots[i, j] = (Universe.field_colors[Universe.selected_field_color][0])
                 else:
-                    dots[i, j] = Engine.calcular_color(g_module, Universe.min_g, Universe.max_g, Universe.field_colors)  # Universe.value_to_rgb(g_module, min_g, max_g)
+                    dots[i, j] = Engine.calcular_color(g_module, Universe.min_g, Universe.max_g, Universe.field_colors[Universe.selected_field_color])  # Universe.value_to_rgb(g_module, min_g, max_g)
 
         resized_image = cv2.resize(dots, (Engine.window_height, Engine.window_width), interpolation=cv2.INTER_LINEAR)  # cv2.INTER_CUBIC  INTER_LINEAR
 
         surface = pygame.surfarray.make_surface(resized_image)
 
-        # Mostrar la superficie en la pantalla
-        Engine.screen.blit(surface, (0, 0))
+        Engine.screen.blit(surface, (0, 0))  # Mostrar la superficie en la pantalla
 
-    def draw_axis():
+    def draw_axis_and_grid():
 
         if UI_MANAGER.show_grid:
 

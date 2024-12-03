@@ -19,21 +19,20 @@ class Body:
 
     def __init__(self, mass, pos, vel, color=None):
 
-        self.id = Body.generate_id()
+        self.id = Body.generate_id()  # se genera un id random para el cuerpo
 
         self.mass = mass
 
         self.radius = mass / (10*10**3)  # 294401.3 * math.log10(mass) - 1272006.5  # self.mass ** 0.434
-        # print(self.radius)
 
-        if color == None:
+        if color == None:  # se calcula el color en base a el radio
             color = Engine.calcular_color(Universe.scalar_meters_to_pixels(self.radius), 1, Engine.window_height/4, colores=Universe.body_creation_colors)
-        self.color = color  # Body.COLORS[1]
+        self.color = color
 
         self.x, self.y = pos
         self.x_px, self.y_px = (5, 5)
 
-        self.vel_x,  self.vel_y = vel  # this should be a tuple with x and y axis velocity
+        self.vel_x,  self.vel_y = vel  # deberia pasarsele una tupla como vel cuando se crea
 
     def draw(self):
         if UI_MANAGER.show_circles:
@@ -179,6 +178,41 @@ class Body:
         chars = string.ascii_letters + string.digits + string.punctuation
         return ''.join(random.choice(chars) for _ in range(length))
 
+    def calculate_orbit_velocity(bodies, body1, body2):
+
+        x1, y1 = bodies[body1].x, bodies[body1].y
+
+        x2, y2 = bodies[body2].x, bodies[body2].y
+
+        dx = x1 - x2
+        dy = y1 - y2
+
+        radius = (dx**2+dy**2)**0.5
+
+        modulo_de_vel_orbital = math.sqrt(Universe.G * bodies[body1].mass / radius)  # Velocidad orbital para un cuerpo de masa 1 en una órbita circular de radio radio_orbita alrededor de un cuerpo de masa M
+
+        # Evitar división por cero
+        if x2 == x1:
+            raise ValueError("Los puntos tienen la misma coordenada x. La tangente es indefinida.")
+
+        # Normalizar el vector radial
+        radial_norm_x = dx / radius
+        radial_norm_y = dy / radius
+
+        # Calcular el vector tangente (90 grados respecto al vector radial)
+        tangent_x = -radial_norm_y
+        tangent_y = radial_norm_x
+
+        # Componentes de la velocidad orbital (aplicar la magnitud)
+        vx_orbital = modulo_de_vel_orbital * tangent_x
+        vy_orbital = modulo_de_vel_orbital * tangent_y
+
+        # Ajustar con la velocidad del cuerpo central
+        vel_x1f = vx_orbital + bodies[body2].vel_x
+        vel_y1f = vy_orbital + bodies[body2].vel_y
+
+        return vel_x1f, vel_y1f
+
     def draw_arrow(start, end, width=6, arrow_size=22):
 
         # Calcula el ángulo
@@ -227,8 +261,6 @@ class Body:
         Engine.screen.blit(text, (mouse_pos[0]+Engine.wh//30, mouse_pos[1]-Engine.wh//30))
 
         if returnn:
-            # print(radius_px)
             if radius_px == 0:
                 radius_px = 2
             return Universe.scalar_pixels_to_meters(radius_px) * 10*10**3, color  # ese numero es el q define la relacion entre masa - radio
-            # return 10 ** ((Universe.scalar_pixels_to_meters(radius_px) + 1272006.5) / 294401.3)

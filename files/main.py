@@ -1,9 +1,10 @@
-### IMPORTING MODULES ###
+### IMPORTACIÓN DE LIBRERIAS ###
 
 from Body import Body
 from Universe import Universe
 from Engine import Engine
-from UI import UI_MANAGER, Simulation_Ui, Help_Ui
+from UI import UI_MANAGER, Simulation_Ui, Help_Ui, Orbit_Mode_UI
+
 import pygame
 import sys
 import time
@@ -12,9 +13,9 @@ import webbrowser
 import os
 
 
-os.chdir(os.path.dirname(os.path.abspath(__file__)))  # sets the current directory to the file's directory # noqa
+os.chdir(os.path.dirname(os.path.abspath(__file__)))  # establece el directorio de trabajo al del propio archivo main
 
-### SET UP###
+### CONFIGURACIÓN ###
 
 pygame.init()
 
@@ -23,99 +24,91 @@ os.system('cls')  # limpiar la consola
 print(">>>Bienvenido a Gravitum. ¡Experimenta!\n\n>Código fuente: https://github.com/emilioreato/Gravitum")
 
 
-Engine.set_up()
-ui_manager = UI_MANAGER()
+Engine.set_up()  # configuramos Engine q maneja todo lo de la ventana y pygame
+ui_manager = UI_MANAGER()  # configuramos UI_MANAGER q maneja todo lo de la interfaz de usuario
 
-ui_manager.load_resoruces()
+ui_manager.load_resources()  # cargamos los recursos de la interfaz de usuario como imagenes y les damosun tamaño adecuado
 ui_manager.resize()
 
 
-### PROGRAM VARIABLES ###
+### CREACIÓN DE VARIABLES DE EJECUCIÓN ###
 
-global active_uis
+global active_uis  # variable usada para almacenar el estado de los menus activos (ui)
 active_uis = {
     "simulation": True,
     "help": False,
 }
 
-global pause_simulation
+global pause_simulation  # var usada para pausar/ despausar simualcion
 pause_simulation = False
 
-global follow_mouse_body
+global follow_mouse_body  # para saber si cuando el cuerpo tiene q trackear al mouse
 follow_mouse_body = False
-global follow_mouse_camera
+global follow_mouse_camera  # para saber si la camara tiene q trackear al mouse
 follow_mouse_camera = (False, None)
 
-global arrow_velocity_mode
+global arrow_velocity_mode  # guarda datos para cuando se le de velocidad al cuerpo con la flecha
 arrow_velocity_mode = (False, None)
 
-global body_creation_mode
+global body_creation_mode  # guarda datos para cuando se esta creando un cuerpo
 body_creation_mode = (False, None)
 
-global selected_body
+global selected_body  # alamcena el id del cuerpo que se ha seleccionado haciandole un click sobre el
 selected_body = None
 
-global already_created_a_body
+global already_created_a_body  # se usa para saber si alguna vez ya se ha creado algun cuerpo
 already_created_a_body = False
 
-global bodies
+global zoom_register  # guarda informacion de los zooms hechos para poder hacer un zoom acelerado
+zoom_register = [0, time.time()]
+
+global orbit_register
+orbit_register = [False, None]
+Orbit_Mode_UI.render()
+
+global bodies  # variable mas importante q guarda todos los cuerpos activos en el sistema
 bodies = {}
-global collitions_history
+
+global collitions_history  # variable que guarda todo el historial de colisiones entre los cuerpos e info sobre eso asi dps se puede manejar las fusiones
 collitions_history = {}
 
-### FUNCTIONS ###
+
+### FUNCIONES  ###
 
 
-def check_ui_allowance(element_in_media_rect_list):
+def draw():  # funcion principal de dibujar, se encarga de mostrar en pantalla todo lo necesario
 
-    use_in = element_in_media_rect_list["use_rect_in"]
+    if active_uis["simulation"]:  # si estamos con la simulacion activa
 
-    if type(use_in) == tuple:
-        for possible_use in use_in:
-            if active_uis[possible_use] == True:
-                return True
-    else:
-        if use_in == "all" or active_uis[use_in] == True:
-            return True
-    return False
-
-
-def collidepoint(rect, point_pos):
-    if rect.collidepoint(point_pos):
-        return True
-    return False
-
-
-def draw():
-
-    if active_uis["simulation"]:
-
-        if UI_MANAGER.show_field:
+        if UI_MANAGER.show_field:  # si esta activado el showfield, calculamos y mostramos el campo
             Universe.draw_field(bodies)
         else:
-            Engine.screen.fill(Universe.universe_color)
+            Engine.screen.fill(Universe.universe_color)  # si no, simplemente pintamos el fondo de negro
 
-        Universe.draw_axis()
+        Universe.draw_axis_and_grid()  # dibujamos el eje de coordenadas y la grilla
 
-        for body in bodies.values():
+        for body in bodies.values():  # dibujamos todos los cuerpos
             body.draw()
 
-        if arrow_velocity_mode[0]:
+        if arrow_velocity_mode[0]:  # si estamos en modo de dar velocidad con la flecha, dibujamos la flecha y el texto de la velocidad
             Body.draw_arrow((bodies[arrow_velocity_mode[1]].x_px, bodies[arrow_velocity_mode[1]].y_px), pygame.mouse.get_pos())
 
-        if body_creation_mode[0]:
-            Body.creation_draw(body_creation_mode[1], event.pos)
+        if body_creation_mode[0]:  # si estamos en modo de creacion de cuerpo, dibujamos el cuerpo que se esta creando y el texto de la masa
+            Body.creation_draw(body_creation_mode[1], pygame.mouse.get_pos())
 
-        Simulation_Ui.draw()
+        if orbit_register[0]:
+            Orbit_Mode_UI.draw()
 
-    if active_uis["help"]:
+        Simulation_Ui.draw()  # dibujamos la interfaz de usuario de la simulacion
+
+    if active_uis["help"]:  # si estamos en el menu de ayuda, dibujamos la interfaz de usuario de la ayuda
 
         Help_Ui.draw()
 
-    pygame.display.flip()
+    pygame.display.flip()  # actualizamos el frame, la pantalla.
 
 
-def calculations(time_interval):
+def calculations(time_interval):  # funcion donde se realizan todos los calculos de posicion, velocidad, colisiones, etc.
     global selected_body, follow_mouse_body, arrow_velocity_mode
     delete_body = False
 
@@ -147,8 +140,8 @@ def calculations(time_interval):
                         biggest_vel = body_overlaped_id
 
                     overlap_distance = (body.radius + bodies[body_overlaped_id].radius) - np.sqrt((body.x - bodies[body_overlaped_id].x)**2 + (body.y - bodies[body_overlaped_id].y)**2)
-                    if overlap_distance > 0:
-                        # print("corrected")
+                    if overlap_distance > 0:  # esto es para corregir la posicion y no dejar q esten uno encima del otro. se los pone pegados
+
                         direction = np.array([body.x - bodies[body_overlaped_id].x, body.y - bodies[body_overlaped_id].y]) / np.linalg.norm([body.x - bodies[body_overlaped_id].x, body.y - bodies[body_overlaped_id].y])
                         if biggest_vel == body.id:
                             body.x += overlap_distance * direction[0]
@@ -235,13 +228,13 @@ def calculations(time_interval):
 
 time.perf_counter()
 
-### MAIN PYGAME LOOP ###
+# BUCLE PRINCIPAL DE PYGAME ### (se ejecuta tantas veces por segundo como fps tengas)
 
 while True:
 
-    for event in pygame.event.get():
+    for event in pygame.event.get():  # si ha ocurrido algun evento
 
-        if event.type == pygame.MOUSEMOTION:
+        if event.type == pygame.MOUSEMOTION:  # si se ha movido el mouse
 
             if follow_mouse_camera[0]:  # actualizar la posicion de la camara
                 if event.pos[0] < 0 or event.pos[0] > Engine.window_width or event.pos[1] < 0 or event.pos[1] > Engine.window_height:  # si el mouse sale de la pantalla, no actualices
@@ -261,22 +254,43 @@ while True:
                 if arrow_velocity_mode[0]:
                     arrow_velocity_mode = (False, None)
 
-                # if not follow_mouse_body:  # si ya no
+                smth_got_clicked = False
+
                 for body in bodies.values():  # chequea entre todos los cuerpos si alguno fue clickeado y si es asi:
                     if body.is_clicked(event.pos):
                         selected_body = body.id  # se guarda su id en selected_body para identificarlo despues
+                        smth_got_clicked = True
+
+                if smth_got_clicked:
+
+                    if orbit_register[0]:
+                        if orbit_register[1] is None:
+                            orbit_register[1] = selected_body
+
+                        else:
+                            vx, vy = Body.calculate_orbit_velocity(bodies, orbit_register[1], selected_body)
+
+                            print(vx, vy)
+
+                            bodies[selected_body].vel_x = vx
+                            bodies[selected_body].vel_y = vy
+
+                            orbit_register = [False, None]
+
+                    else:
                         follow_mouse_body = True  # se activa el seguimiento de mouse para cuerpoo
 
-                if check_ui_allowance(UI_MANAGER.rects["help_btn"]) and collidepoint(UI_MANAGER.rects["help_btn"]["rect"], event.pos):  # check if btn was clicked
+                else:
+                    if UI_MANAGER.check_ui_allowance(active_uis, UI_MANAGER.rects["help_btn"]) and UI_MANAGER.collidepoint(UI_MANAGER.rects["help_btn"]["rect"], event.pos):  # check if btn was clicked
 
-                    active_uis["help"] = not active_uis["help"]
-                    if active_uis["help"]:
-                        pause_simulation = True
-                    else:
-                        pause_simulation = False
+                        active_uis["help"] = not active_uis["help"]
+                        if active_uis["help"]:
+                            pause_simulation = True
+                        else:
+                            pause_simulation = False
 
-                elif check_ui_allowance(UI_MANAGER.rects["github_btn"]) and collidepoint(UI_MANAGER.rects["github_btn"]["rect"], event.pos):  # check if btn was clicked
-                    webbrowser.open("https://github.com/emilioreato/Gravitum")
+                    elif UI_MANAGER.check_ui_allowance(active_uis, UI_MANAGER.rects["github_btn"]) and UI_MANAGER.collidepoint(UI_MANAGER.rects["github_btn"]["rect"], event.pos):  # check if btn was clicked
+                        webbrowser.open("https://github.com/emilioreato/Gravitum")
 
             elif event.button == 2:  # si se cliquea el boton del medio centramos la camara
 
@@ -348,73 +362,113 @@ while True:
                 else:  # se deshabilita el movimiento de camara
                     follow_mouse_camera = (False, None)  # dejamos de seguir el movimiento del mouse para la camara
 
-        elif event.type == pygame.MOUSEWHEEL:
-            if already_created_a_body:  # si hay al menos un cuerpo en pantalla
-                if event.y > 0:  # si rueda hacia arriba
-                    Universe.zoom += Universe.zoom*0.035  # aumentamos el zoom en un 4%
+        elif event.type == pygame.MOUSEWHEEL:  # si se ha movido la rueda del mouse
+            if already_created_a_body:  # si ha se ha creado alguna vez un cuerpo con lo cual se setearon ciertas medidas (max_x, max_y , etc)
+
+                current_time = time.time()
+
+                if current_time - zoom_register[1] < 0.2:  # si han pasado menos de 0.3 segundos desde el ultimo zoom
+                    zoom_register[0] += 1  # sumamos al multiplicador de la aceleracion
                 else:
-                    Universe.zoom -= Universe.zoom*0.035  # sino lo reducimos en un 4%
+
+                    zoom_register[0] = 0  # reiniciamos el multiplcador
+
+                zoom_register[1] = current_time  # actualizamos el tiempo del ultimo zoom
+
+                mult = 0.0225 + zoom_register[0] * 0.00325  # obtenemos un multiplicador basado en q tanto hemos scrolleado seguido
+
+                if event.y > 0:  # si rueda hacia arriba
+                    Universe.zoom += Universe.zoom*mult  # aumentamos el zoom en un valor aprox a 2+ aceleracion%
+                else:
+                    Universe.zoom -= Universe.zoom*mult  # sino lo reducimos en un valor aprox a 2 + aceleracion%
+
                 Universe.set_px_m_ratio(None, False, pygame.mouse.get_pos())  # actualizamos la proporcion de pixeles_metros en base al nuevo zoom y a la posicion del mouse
                 for body in bodies.values():  # actualizamos el radio de cada cuerpo en pixeles en base a la nueva proporcion px_m
                     body.update_radius_px()
 
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:  # cierra el programa
+        elif event.type == pygame.KEYDOWN:  # si se ha presiona una tecla
+            if event.key == pygame.K_ESCAPE:  # si se presiona escape se cierra el programa
                 pygame.quit()
                 sys.exit()
-            elif event.key == pygame.K_SPACE:
-                Universe.time_scale = Universe.time_scale*4  # si presionas el espacio se multiplica el time_scale por 4 asi va mas rapido
-            elif event.key == pygame.K_b:
-                Universe.time_scale = Universe.time_scale*-1  # si presionas la b se invierte el time_scale asi va en reversa la simulacion
+
+            elif event.key == pygame.K_SPACE:  # si presionas el espacio se multiplica el time_scale por 4 asi va mas rapido
+                Universe.time_scale = Universe.time_scale*4
+
+            elif event.key == pygame.K_TAB:  # si presionas el tab se multiplica el time_scale por 18 asi va mas rapido
+                Universe.time_scale = Universe.time_scale*18
+
+            elif event.key == pygame.K_b:  # si presionas la b se invierte el time_scale asi va en reversa la simulacion
+                Universe.time_scale = Universe.time_scale*-1
+
             elif event.key == pygame.K_c:  # centra la camara
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
-            elif event.key == pygame.K_k:  # reinicia la simulacion en pocas palabras
+
+            elif event.key == pygame.K_k:  # reinicia la simulacion. vuelve todo a cero.
                 Universe.camera_x = Engine.window_width/2
                 Universe.camera_y = Engine.window_height/2
                 Universe.px_to_m_ratio = (60/30)
                 Universe.zoom = 0.5
                 bodies = {}
+
             elif event.key == pygame.K_p:  # pausa y despausa la simulacion
                 pause_simulation = not pause_simulation
-            elif event.key == pygame.K_a:
+
+            elif event.key == pygame.K_a:  # si se presiona la g se activa/desactiva el muestreo de los ejes
                 UI_MANAGER.show_axis = not UI_MANAGER.show_axis
-            elif event.key == pygame.K_g:
+
+            elif event.key == pygame.K_g:  # si se presiona la g se activa/desactiva el muestreo de las celdas
                 UI_MANAGER.show_grid = not UI_MANAGER.show_grid
-            elif event.key == pygame.K_d:
+
+            elif event.key == pygame.K_d:  # si se presiona la d se activa/desactiva el muestreo de datos de los cuerpos en pantalla
                 UI_MANAGER.show_details = not UI_MANAGER.show_details
-            elif event.key == pygame.K_h:
+
+            elif event.key == pygame.K_h:  # si se presiona la h abrimos el menu de ayuda
                 active_uis["help"] = not active_uis["help"]
-                if active_uis["help"]:
+                if active_uis["help"]:  # si se entra al menu entonces pausamos la simulacion, sino la despausamos
                     pause_simulation = True
                 else:
                     pause_simulation = False
+
             elif event.key == pygame.K_s:
                 UI_MANAGER.show_circles = not UI_MANAGER.show_circles
-            elif event.key == pygame.K_f:
+
+            elif event.key == pygame.K_f:  # si se presiona la f se activa y desactiva el muestreo del campo. tambien se modifica el timescale para q no de apariencia de q va mas lento/rapido. esto es debido a q el procesamiendo para dibujar el campo relentiza todo
                 UI_MANAGER.show_field = not UI_MANAGER.show_field
                 if UI_MANAGER.show_field:
-                    Universe.time_scale = Universe.time_scale*3
+                    Universe.time_scale = Universe.time_scale*4
                 else:
-                    Universe.time_scale = Universe.time_scale/3
+                    Universe.time_scale = Universe.time_scale/4
 
-            elif event.key == pygame.K_r:  # en base a los cuerpos existentes recalcula el px_m_ratio y el zoom para que se vean todos los cuerpos en pantalla
+            elif event.key == pygame.K_t:  # cuando se presiona la tecla t se pasa a la siguiente combinancion de color para el campo.
+                Universe.selected_field_color += 1  # la eleccion es esta variable q representa q posicion del arrray de combinaciones de colores en Universe.field_colors
+                if Universe.selected_field_color > len(Universe.field_colors)-1:
+                    Universe.selected_field_color = 0
+
+            elif event.key == pygame.K_r:  # si presiona la r, en base a los cuerpos existentes recalcula el px_m_ratio y el zoom para que se vean todos los cuerpos en pantalla
                 Universe.zoom = 0.75
                 Universe.set_px_m_ratio(bodies, True)
                 for body in bodies.values():  # actualizamos el radio de cada cuerpo en pixeles en base a la nueva proporcion px_m
                     body.update_radius_px()
 
+            elif event.key == pygame.K_o:  # cuando se presiona la tecla se activa el modo orbita
+                orbit_register[0] = not orbit_register[0]
+
         elif event.type == pygame.KEYUP:  # si se suelta una tecla
             if event.key == pygame.K_SPACE:  # si se suelta es espacio entonces restauremos el time_scale al antiguo
                 Universe.time_scale = Universe.time_scale/4
+
+            elif event.key == pygame.K_TAB:  # si se suelta es espacio entonces restauremos el time_scale al antiguo
+                Universe.time_scale = Universe.time_scale/18
+
             elif event.key == pygame.K_b:  # si se suelta la b entonces restauremos el time_scale al antiguo
                 Universe.time_scale = Universe.time_scale*-1
 
-        elif event.type == pygame.QUIT:
+        elif event.type == pygame.QUIT:  # si se cierra la ventana salimos del programa
             pygame.quit()
             sys.exit()
 
-    if not pause_simulation:
+    if not pause_simulation:  # si la simulacion no esta pausada
         calculations(time.perf_counter())  # llamando a la funcion de calculos principal
 
     draw()  # llamando a la funcion draw principal
