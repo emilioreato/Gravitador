@@ -1,10 +1,11 @@
 from Engine import Engine
 from UI import UI_MANAGER
+
 import pygame
 import numpy as np
-from scipy.ndimage import zoom
 import cv2
 import math
+from scipy.ndimage import zoom
 from numba import jit
 
 
@@ -18,7 +19,7 @@ class Universe:
 
     restitution_coefficient = 0.4  # coeficiente de restitución (% de conservacion de la energía mecanica en el choque)
 
-    time_scale = 0.0000000028  # 0.000000005 simboliza q tan rapido avanza el tiempo en el simulador. es el multiplicador de los nanosegundos entre iteraciones q se usa luego como dt
+    time_scale = 0.00000000262  # 0.000000005 simboliza q tan rapido avanza el tiempo en el simulador. es el multiplicador de los nanosegundos entre iteraciones q se usa luego como dt
 
     universe_color = (5, 5, 7)  # colores de algunos elementos del sistema
     axis_color = (118, 118, 118)
@@ -94,8 +95,8 @@ class Universe:
 
     @staticmethod
     @jit(nopython=True)
-    def intensity_operation(g, mass, x, x1, y, y1):
-        return g * mass / ((x - x1)**2 + (y - y1)**2)
+    def intensity_operation(G, mass, x, x1, y, y1):
+        return G * mass / ((x - x1)**2 + (y - y1)**2)
 
     @staticmethod
     def draw_field(bodies):

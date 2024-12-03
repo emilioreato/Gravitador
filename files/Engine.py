@@ -1,6 +1,5 @@
 from numba import jit
 import pygame
-import numpy as np
 import os
 from win32con import ENUM_CURRENT_SETTINGS
 from win32api import EnumDisplaySettings
@@ -58,6 +57,7 @@ class Engine:
         pygame.display.set_icon(pygame.image.load("media\\icon.png").convert_alpha())  # sets window icon
 
         Engine.font1 = pygame.font.SysFont("Times New Roman", Engine.wh//38)
+        Engine.font1 = pygame.font.SysFont("Times New Roman", Engine.wh//46)
 
     @jit(nopython=True)
     def calcular_color(valor, minimo, maximo, colores):

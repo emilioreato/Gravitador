@@ -1,29 +1,38 @@
+from Engine import Engine
+from UI import UI_MANAGER
+from Universe import Universe
+
 from numba import jit
 import string
 import random
 import pygame
-from Engine import Engine
-from UI import UI_MANAGER
-from Universe import Universe
 import numpy as np
 import math
 
 
 class Body:
 
-    COLORS = [(30, 50, 70),
-              (220, 190, 35),
-              (110, 30, 20),
-              (50, 10, 150),
-              ]
+    COLORS = (
+        (110, 30, 20),
+        (50, 10, 150),
+    )
 
-    def __init__(self, mass, pos, vel, color=None):
+    mass_to_radius_constant = 10**4
+
+    def __init__(self,  pos, vel, mass=None, color=None, reference_radius=None):
 
         self.id = Body.generate_id()  # se genera un id random para el cuerpo
 
         self.mass = mass
 
-        self.radius = mass / (10*10**3)  # 294401.3 * math.log10(mass) - 1272006.5  # self.mass ** 0.434
+        if reference_radius:
+            self.radius_px = reference_radius
+
+            self.radius = Universe.scalar_pixels_to_meters(reference_radius)  # 294401.3 * math.log10(mass) - 1272006.5  # self.mass ** 0.434
+
+            self.mass = Body.radius_to_mass(self.radius)
+        else:
+            self.radius = Body.mass_to_radius(self.mass)
 
         if color == None:  # se calcula el color en base a el radio
             color = Engine.calcular_color(Universe.scalar_meters_to_pixels(self.radius), 1, Engine.window_height/4, colores=Universe.body_creation_colors)
@@ -171,6 +180,14 @@ class Body:
         if self.radius_px < 1:
             self.radius_px = 1
 
+    @staticmethod
+    def mass_to_radius(mass):
+        return mass / Body.mass_to_radius_constant
+
+    @staticmethod
+    def radius_to_mass(radius):
+        return radius * Body.mass_to_radius_constant
+
     def is_clicked(self, mouse_pos):
         return (mouse_pos[0]-self.x_px)**2 + (mouse_pos[1]-self.y_px)**2 <= self.radius_px**2
 
@@ -223,7 +240,7 @@ class Body:
         modified_end = (end[0]-arrow_size*0.5*math.cos(angle), end[1]-arrow_size*0.5*math.sin(angle))
 
         # Línea principal
-        pygame.draw.line(Engine.screen, Body.COLORS[2], start, modified_end, width)
+        pygame.draw.line(Engine.screen, Body.COLORS[0], start, modified_end, width)
 
         # Coordenadas del triángulo de la punta
         arrow_tip = end
@@ -237,7 +254,7 @@ class Body:
         )
 
         # Dibuja el triángulo
-        pygame.draw.polygon(Engine.screen, Body.COLORS[2], [arrow_tip, left_wing, right_wing])
+        pygame.draw.polygon(Engine.screen, Body.COLORS[0], [arrow_tip, left_wing, right_wing])
 
         # dibujar el texto q dice la nueva velocidad
 
@@ -256,11 +273,11 @@ class Body:
 
         pygame.draw.circle(Engine.screen, color, creation_pos, radius_px)
 
-        text = Engine.font1.render(f"{Universe.scalar_pixels_to_meters(radius_px) * 5:.0f} mil kg", True, Engine.UI_COLORS[0])
+        text = Engine.font1.render(f"{Universe.scalar_pixels_to_meters(radius_px) * 10:.0f} mil kg", True, Engine.UI_COLORS[0])
 
         Engine.screen.blit(text, (mouse_pos[0]+Engine.wh//30, mouse_pos[1]-Engine.wh//30))
 
         if returnn:
             if radius_px == 0:
                 radius_px = 2
-            return Universe.scalar_pixels_to_meters(radius_px) * 10*10**3, color  # ese numero es el q define la relacion entre masa - radio
+            return radius_px, color  # ese numero es el q define la relacion entre masa - radio

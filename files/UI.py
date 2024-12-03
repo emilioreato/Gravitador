@@ -75,7 +75,7 @@ class Orbit_Mode_UI:
 
     def draw():
 
-        Engine.screen.blit(Orbit_Mode_UI.text, (Engine.window_width / 3, Engine.window_height / 25))
+        Engine.screen.blit(Orbit_Mode_UI.text, (Engine.window_width / 3.6, Engine.window_height / 25))
 
 
 class Help_Ui:

@@ -1,5 +1,5 @@
 fps: system
-field_resolution: 80
-window_height(px): 700
+field_resolution: 40
+window_height(px): 640
 
 

@@ -207,7 +207,7 @@ def calculations(time_interval):  # funcion donde se realizan todos los calculos
 
     if delete_body:  # mas q eliminar un cuerpo lo que hacemos es eliminar los dos pero crear otro q tenga la suma de masa de los dos y la posicion dle mas grande, etc
 
-        bodies["new"] = Body(mass, position, vel)
+        bodies["new"] = Body(position, vel, mass=mass)
         bodies["new"].x_px, bodies["new"].y_px = Universe.meters_to_pixels(position)
         bodies["new"].update_radius_px()
 
@@ -333,9 +333,9 @@ while True:
             elif event.button == 2:
                 if body_creation_mode[0]:  # si veniamos creando un cuerpo
 
-                    mass, color = Body.creation_draw(body_creation_mode[1], event.pos, True)
+                    radius, color = Body.creation_draw(body_creation_mode[1], event.pos, True)
                     x, y = Universe.pixels_to_meters(pygame.mouse.get_pos())
-                    bodies["new"] = Body(mass, (x, y), (0, 0), color)
+                    bodies["new"] = Body((x, y), (0, 0), color, reference_radius=radius)
                     id = bodies["new"].id
                     bodies[id] = bodies.pop("new")
 
@@ -375,7 +375,7 @@ while True:
 
                 zoom_register[1] = current_time  # actualizamos el tiempo del ultimo zoom
 
-                mult = 0.0225 + zoom_register[0] * 0.00325  # obtenemos un multiplicador basado en q tanto hemos scrolleado seguido
+                mult = 0.025 + zoom_register[0] * 0.00375  # obtenemos un multiplicador basado en q tanto hemos scrolleado seguido
 
                 if event.y > 0:  # si rueda hacia arriba
                     Universe.zoom += Universe.zoom*mult  # aumentamos el zoom en un valor aprox a 2+ aceleracion%
